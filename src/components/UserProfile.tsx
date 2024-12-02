@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+ import React, { useEffect } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { useStore } from '../lib/store';
 import { ContentAnalyzer } from '../lib/analysis';
@@ -50,6 +50,9 @@ export function UserProfile() {
 
   return (
     <div className="w-80 space-y-4">
+      {/* API Stats Box */}
+      <ApiStats />
+
       {/* User Profile Box */}
       <div className="bg-white rounded-lg shadow-sm p-4 space-y-6">
         {/* User Profile Header */}
@@ -150,9 +153,6 @@ export function UserProfile() {
           </div>
         </div>
       </div>
-
-      {/* API Stats Box */}
-      <ApiStats />
     </div>
   );
 }

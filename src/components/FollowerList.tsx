@@ -10,11 +10,13 @@ export function FollowerList() {
   const { followers, userProfile } = useStore((state) => state);
   const { loading } = useFollowers();
   const [interactions, setInteractions] = useState<Record<string, RecentInteraction>>({});
+  const [checkingInteractions, setCheckingInteractions] = useState(false);
 
   useEffect(() => {
     async function checkInteractions() {
       if (!userProfile || !followers.length) return;
 
+      setCheckingInteractions(true);
       const bluesky = BlueSkyService.getInstance();
       const newInteractions: Record<string, RecentInteraction> = {};
 
@@ -30,6 +32,7 @@ export function FollowerList() {
       }
 
       setInteractions(newInteractions);
+      setCheckingInteractions(false);
     }
 
     checkInteractions();
@@ -44,12 +47,14 @@ export function FollowerList() {
     });
   };
 
-  if (loading) {
+  if (loading || checkingInteractions) {
     return (
       <div className="w-full max-w-2xl bg-white rounded-lg shadow-md p-6">
         <div className="flex flex-col items-center justify-center py-12">
           <Loader className="w-8 h-8 text-blue-500 animate-spin" />
-          <p className="mt-4 text-gray-600">Loading followers...</p>
+          <p className="mt-4 text-gray-600">
+            {loading ? 'Loading followers...' : 'Checking recent interactions...'}
+          </p>
         </div>
       </div>
     );

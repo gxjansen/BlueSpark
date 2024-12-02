@@ -36,6 +36,18 @@ interface ReplyRef {
   };
 }
 
+interface ThreadPost {
+  author: PostAuthor;
+}
+
+interface ThreadView {
+  posts?: ThreadPost[];
+}
+
+interface ExtendedFeedViewPost extends FeedViewPost {
+  thread?: ThreadView;
+}
+
 export class BlueSkyService {
   private agent: BskyAgent;
   private static instance: BlueSkyService;
@@ -153,43 +165,48 @@ export class BlueSkyService {
 
       // Get user's recent posts
       const userPosts = await this.retryOperation(
-        () => this.agent.getAuthorFeed({ actor: userDid }),
+        () => this.agent.getAuthorFeed({ actor: userDid, limit: 100 }),
         `Get recent posts for ${userDid}`
       );
 
       // Get follower's recent posts
       const followerPosts = await this.retryOperation(
-        () => this.agent.getAuthorFeed({ actor: followerDid }),
+        () => this.agent.getAuthorFeed({ actor: followerDid, limit: 100 }),
         `Get recent posts for ${followerDid}`
       );
 
       const result: RecentInteraction = { hasInteracted: false };
 
       // Helper function to check if a post is within the last week
-      const isWithinLastWeek = (post: FeedViewPost) => {
+      const isWithinLastWeek = (post: ExtendedFeedViewPost) => {
         const postDate = new Date(post.post.indexedAt);
         return postDate >= oneWeekAgo;
       };
 
       // Helper function to check if a post mentions or replies to a user
-      const checkPostInteraction = (post: FeedViewPost, targetDid: string): boolean => {
+      const checkPostInteraction = (post: ExtendedFeedViewPost, targetDid: string): boolean => {
         const record = post.post.record as PostRecord;
         const reply = post.reply as ReplyRef | undefined;
-        
+
         // Check for mentions in post text
         const hasMention = record?.text?.toLowerCase().includes(targetDid);
         
         // Check if it's a reply to the target user
         const isReply = reply?.parent?.author?.did === targetDid;
+
+        // Check if the post is a reply in a thread started by the target user
+        const isThreadParticipant = post.thread?.posts?.some(
+          (threadPost: ThreadPost) => threadPost.author.did === targetDid
+        );
         
-        return Boolean(hasMention || isReply);
+        return Boolean(hasMention || isReply || isThreadParticipant);
       };
 
       // Check user's posts for interactions with follower
       for (const post of userPosts.data.feed) {
-        if (!isWithinLastWeek(post)) continue;
+        if (!isWithinLastWeek(post as ExtendedFeedViewPost)) continue;
         
-        if (checkPostInteraction(post, followerDid)) {
+        if (checkPostInteraction(post as ExtendedFeedViewPost, followerDid)) {
           result.hasInteracted = true;
           result.lastInteractionDate = post.post.indexedAt;
           break;
@@ -199,9 +216,9 @@ export class BlueSkyService {
       // If no interaction found, check follower's posts
       if (!result.hasInteracted) {
         for (const post of followerPosts.data.feed) {
-          if (!isWithinLastWeek(post)) continue;
+          if (!isWithinLastWeek(post as ExtendedFeedViewPost)) continue;
           
-          if (checkPostInteraction(post, userDid)) {
+          if (checkPostInteraction(post as ExtendedFeedViewPost, userDid)) {
             result.hasInteracted = true;
             result.lastInteractionDate = post.post.indexedAt;
             break;
