@@ -1,19 +1,16 @@
 import { AuthService } from './auth';
 import { PostsService } from './posts';
-import { InteractionsService } from './interactions';
 import { ContentAnalyzer } from '../analysis';
-import type { RecentInteraction, BlueSkyCredentials, FollowerProfile, ProfileAnalysis } from '../../types/bluesky';
+import type { BlueSkyCredentials, FollowerProfile, ProfileAnalysis } from '../../types/bluesky';
 
 export class BlueSkyService {
   private static instance: BlueSkyService;
   private auth: AuthService;
   private posts: PostsService;
-  private interactions: InteractionsService;
 
   private constructor() {
     this.auth = AuthService.getInstance();
     this.posts = PostsService.getInstance();
-    this.interactions = InteractionsService.getInstance();
   }
 
   static getInstance(): BlueSkyService {
@@ -41,8 +38,8 @@ export class BlueSkyService {
     return this.posts.getProfile(handle);
   }
 
-  async getRecentFollowers(handle: string, limit = 20) {
-    return this.posts.getRecentFollowers(handle, limit);
+  async getRecentFollowers(handle: string, limit = 20, cursor?: string) {
+    return this.posts.getRecentFollowers(handle, limit, cursor);
   }
 
   async getUserPosts(did: string, limit = 50) {
@@ -51,11 +48,6 @@ export class BlueSkyService {
 
   async createPost(text: string) {
     return this.posts.createPost(text);
-  }
-
-  // Interactions methods
-  async checkRecentInteractions(userDid: string, followerDid: string): Promise<RecentInteraction> {
-    return this.interactions.checkRecentInteractions(userDid, followerDid);
   }
 
   // Analysis methods

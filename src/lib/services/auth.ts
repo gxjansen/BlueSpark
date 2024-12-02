@@ -52,7 +52,8 @@ export class AuthService {
 
   async resumeSession(credentials: BlueSkyCredentials) {
     try {
-      return await this.login(credentials.identifier, credentials.password);
+      const session = await this.login(credentials.identifier, credentials.password);
+      return session;
     } catch (error) {
       console.error('Failed to resume session:', error);
       throw error;
@@ -60,7 +61,7 @@ export class AuthService {
   }
 
   isAuthenticated(): boolean {
-    return !!this.agent.session;
+    return !!this.agent.session?.accessJwt;
   }
 
   getAgent(): BskyAgent {

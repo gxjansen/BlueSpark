@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
-import { RefreshCw, Send, Edit2, Tag } from 'lucide-react';
+import { RefreshCw, Send, Edit2, Tag, MessageCircle } from 'lucide-react';
 import { useStore } from '../lib/store';
 import { AIService } from '../lib/ai';
 import { BlueSkyService } from '../lib/services/bluesky-facade';
 import { ContentAnalyzer } from '../lib/analysis';
+import { Card } from './shared/Card';
+import { Button } from './shared/Button';
+import { TopicTagList } from './shared/TopicTag';
 import toast from 'react-hot-toast';
+
+const MAX_CHARS = 300;
 
 interface MessageGeneratorProps {
   followerHandle: string;
@@ -16,6 +21,7 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
     followers,
     messages,
     profileAnalysis,
+    isAuthenticated,
     setMessage,
     setGenerating,
     setError
@@ -29,6 +35,16 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
   const [isLoadingTopics, setIsLoadingTopics] = useState(false);
   const [isInitialGeneration, setIsInitialGeneration] = useState(true);
   const [isPosted, setIsPosted] = useState(false);
+
+  const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const text = e.target.value;
+    if (text.length <= MAX_CHARS) {
+      setEditedMessage(text);
+    }
+  };
+
+  const currentMessage = isEditing ? editedMessage : messageState.message || '';
+  const remainingChars = MAX_CHARS - currentMessage.length;
 
   const loadCommonTopics = async () => {
     if (userProfile && followers) {
@@ -52,6 +68,11 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
   };
 
   const generateMessage = async (topic?: string) => {
+    if (!isAuthenticated) {
+      toast.error('Please log in to generate messages');
+      return;
+    }
+
     setGenerating(followerHandle, true);
     setError(followerHandle, null);
     setIsEditing(false);
@@ -102,18 +123,19 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
   };
 
   const postMessage = async () => {
+    if (!isAuthenticated) {
+      toast.error('Please log in to post messages');
+      return;
+    }
+
     const messageToPost = isEditing ? editedMessage : messageState.message;
-    if (!messageToPost.trim()) {
+    if (!messageToPost?.trim()) {
       toast.error('No message to post');
       return;
     }
 
     try {
       const bluesky = BlueSkyService.getInstance();
-      if (!bluesky.isAuthenticated()) {
-        throw new Error('Not authenticated. Please log in again.');
-      }
-
       await bluesky.createPost(messageToPost);
       setIsPosted(true);
       toast.success('Welcome message posted successfully!');
@@ -127,9 +149,9 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
   if (isPosted) {
     return (
       <div className="mt-4">
-        <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4 text-green-400">
-          <p className="text-sm">Welcome message posted successfully! 🎉</p>
-        </div>
+        <Card className="bg-green-500/10 border-green-500/20">
+          <p className="text-sm text-green-400">Welcome message posted successfully! 🎉</p>
+        </Card>
       </div>
     );
   }
@@ -141,26 +163,18 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
         <div className="mb-3">
           <div className="flex items-center mb-2">
             <Tag className="w-4 h-4 mr-1 text-blue-400" />
-            <span className="text-sm text-gray-300">Click any of these shared interests to refine the message:</span>
+            <span className="text-sm text-gray-300">
+              Click any of these shared interests to refine the message:
+            </span>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {commonTopics.map((topic) => (
-              <button
-                key={topic}
-                onClick={() => {
-                  setSelectedTopic(topic);
-                  generateMessage(topic);
-                }}
-                className={`px-2 py-1 text-xs rounded-full transition-colors ${
-                  selectedTopic === topic
-                    ? 'bg-blue-500/20 text-blue-400'
-                    : 'bg-[#2a3441] text-gray-300 hover:bg-[#323e4e]'
-                }`}
-              >
-                {topic}
-              </button>
-            ))}
-          </div>
+          <TopicTagList
+            topics={commonTopics}
+            selectedTopic={selectedTopic}
+            onTopicClick={(topic) => {
+              setSelectedTopic(topic);
+              generateMessage(topic);
+            }}
+          />
         </div>
       )}
 
@@ -172,58 +186,82 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
       )}
 
       {(messageState.message || isEditing) && (
-        <div className="bg-[#2a3441] p-4 rounded-lg shadow-sm space-y-3 border border-[#323e4e]">
-          {isEditing ? (
-            <textarea
-              value={editedMessage}
-              onChange={(e) => setEditedMessage(e.target.value)}
-              className="w-full p-2 bg-[#323e4e] border border-[#3b4758] rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[100px] text-gray-100"
-              placeholder="Edit your welcome message..."
-            />
-          ) : (
-            <p className="text-gray-300">{messageState.message}</p>
-          )}
+        <Card className="space-y-6">
+          <div className="space-y-2">
+            {isEditing ? (
+              <>
+                <textarea
+                  value={editedMessage}
+                  onChange={handleMessageChange}
+                  maxLength={MAX_CHARS}
+                  className="w-full p-2 bg-[#323e4e] border border-[#3b4758] rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[100px] text-gray-100"
+                  placeholder="Edit your welcome message..."
+                />
+                <div className="text-right">
+                  <span className={`text-xs ${remainingChars < 50 ? 'text-amber-400' : 'text-gray-500'}`}>
+                    {remainingChars} characters remaining
+                  </span>
+                </div>
+              </>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-gray-300">{messageState.message}</p>
+                <div className="text-right">
+                  <span className={`text-xs ${remainingChars < 50 ? 'text-amber-400' : 'text-gray-500'}`}>
+                    {remainingChars} characters remaining
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
           
           <div className="flex gap-2">
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={RefreshCw}
               onClick={() => generateMessage(selectedTopic || undefined)}
-              className="flex items-center px-3 py-1 text-sm text-gray-300 hover:text-gray-100"
-              disabled={messageState.isGenerating}
+              isLoading={messageState.isGenerating}
             >
-              <RefreshCw className={`w-4 h-4 mr-1 ${messageState.isGenerating ? 'animate-spin' : ''}`} />
               {messageState.isGenerating ? 'Generating...' : 'Regenerate'}
-            </button>
+            </Button>
             {!isEditing && (
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={Edit2}
                 onClick={() => {
-                  setEditedMessage(messageState.message);
+                  setEditedMessage(messageState.message || '');
                   setIsEditing(true);
                 }}
-                className="flex items-center px-3 py-1 text-sm text-gray-300 hover:text-gray-100"
               >
-                <Edit2 className="w-4 h-4 mr-1" />
                 Edit
-              </button>
+              </Button>
             )}
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={Send}
               onClick={postMessage}
-              className="flex items-center px-3 py-1 text-sm text-blue-400 hover:text-blue-300"
               disabled={messageState.isGenerating}
+              className="text-blue-400 hover:text-blue-300"
             >
-              <Send className="w-4 h-4 mr-1" />
               Post
-            </button>
+            </Button>
           </div>
-        </div>
+        </Card>
       )}
       
       {!messageState.message && !messageState.isGenerating && !isEditing && !isLoadingTopics && (
-        <button
+        <Button
+          variant="secondary"
+          size="sm"
+          icon={MessageCircle}
           onClick={() => generateMessage()}
-          className="text-blue-400 hover:text-blue-300 text-sm"
+          className="text-blue-400 hover:text-blue-300"
         >
           Generate welcome message
-        </button>
+        </Button>
       )}
 
       {messageState.error && (

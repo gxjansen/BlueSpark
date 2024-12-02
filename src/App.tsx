@@ -3,9 +3,13 @@ import { useStore } from './lib/store';
 import { LoginForm } from './components/LoginForm';
 import { FollowerList } from './components/FollowerList';
 import { UserProfile } from './components/UserProfile';
-import { BlueSkyService } from './lib/bluesky';
+import { BlueSkyService } from './lib/services/bluesky-facade';
 import { Loader } from 'lucide-react';
+import { AppBskyFeedDefs, AppBskyFeedPost } from '@atproto/api';
 import toast from 'react-hot-toast';
+
+type FeedViewPost = AppBskyFeedDefs.FeedViewPost;
+type PostRecord = AppBskyFeedPost.Record;
 
 function App() {
   const { 
@@ -14,7 +18,8 @@ function App() {
     isAutoLogging,
     setCredentials, 
     setAutoLogging,
-    logout 
+    logout,
+    setUserProfile
   } = useStore();
 
   // Attempt automatic login if we have stored credentials
@@ -23,9 +28,30 @@ function App() {
       if (credentials && !isAuthenticated && !isAutoLogging) {
         setAutoLogging(true);
         try {
-          const service = BlueSkyService.getInstance();
-          await service.resumeSession(credentials);
+          const bluesky = BlueSkyService.getInstance();
+          const session = await bluesky.resumeSession(credentials);
           setCredentials(credentials); // Re-set to trigger state update
+          
+          // Load user profile after successful login
+          const profile = await bluesky.getProfile(credentials.identifier);
+          const posts = await bluesky.getUserPosts(profile.did);
+          
+          setUserProfile({
+            did: profile.did,
+            handle: profile.handle,
+            displayName: profile.displayName || profile.handle,
+            description: profile.description || '',
+            avatar: profile.avatar,
+            posts: posts.map((post: FeedViewPost) => ({
+              text: (post.post.record as PostRecord).text,
+              createdAt: (post.post.record as PostRecord).createdAt
+            })),
+            followersCount: profile.followersCount || 0,
+            followsCount: profile.followsCount || 0,
+            postsCount: profile.postsCount || 0,
+            joinedAt: posts[0] ? (posts[0].post.record as PostRecord).createdAt : new Date().toISOString(),
+            lastPostedAt: posts[0] ? (posts[0].post.record as PostRecord).createdAt : undefined
+          });
         } catch (error) {
           console.error('Auto-login failed:', error);
           toast.error('Stored login expired. Please log in again.');
@@ -37,7 +63,7 @@ function App() {
     }
 
     autoLogin();
-  }, [credentials, isAuthenticated, isAutoLogging, setCredentials, setAutoLogging, logout]);
+  }, [credentials, isAuthenticated, isAutoLogging, setCredentials, setAutoLogging, logout, setUserProfile]);
 
   // Show loading state during auto-login
   if (isAutoLogging) {

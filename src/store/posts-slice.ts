@@ -8,6 +8,7 @@ export interface PostsState {
   welcomeSettings: WelcomeMessageSettings;
   profileAnalysis: ProfileAnalysis | null;
   isAnalyzing: boolean;
+  loading: boolean;
 }
 
 export interface PostsActions {
@@ -19,6 +20,7 @@ export interface PostsActions {
   setGenerating: (followerHandle: string, isGenerating: boolean) => void;
   setError: (followerHandle: string, error: string | null) => void;
   updateWelcomeSettings: (settings: Partial<WelcomeMessageSettings>) => void;
+  setLoading: (loading: boolean) => void;
   resetPosts: () => void;
 }
 
@@ -37,6 +39,7 @@ const createPostsSlice: StateCreator<PostsSlice> = (set) => ({
   welcomeSettings: defaultWelcomeSettings,
   profileAnalysis: null,
   isAnalyzing: false,
+  loading: false,
 
   // Actions
   setFollowers: (followers) => set({ followers }),
@@ -88,11 +91,14 @@ const createPostsSlice: StateCreator<PostsSlice> = (set) => ({
       }
     })),
 
+  setLoading: (loading) => set({ loading }),
+
   resetPosts: () => set({
     followers: [],
     userProfile: null,
     messages: {},
-    profileAnalysis: null
+    profileAnalysis: null,
+    loading: false
   })
 });
 

@@ -3,33 +3,82 @@ import { useStore } from '../lib/store';
 import { Users, Loader, UserRound, Calendar, AlertCircle } from 'lucide-react';
 import { MessageGenerator } from './MessageGenerator';
 import { useFollowers } from '../hooks/useFollowers';
-import { BlueSkyService } from '../lib/services/bluesky-facade';
-import { RecentInteraction } from '../types/bluesky';
+import { AuthService } from '../lib/services/auth';
+import { retryOperation } from '../lib/utils/error-handling';
+import { Card } from './shared/Card';
+import { LoadingState } from './shared/LoadingState';
+import { EmptyState } from './shared/EmptyState';
+import { isWithinLastWeek, checkPostInteraction } from '../lib/utils/interaction-checks';
+import { RecentInteraction } from '../types/interactions';
+import { AppBskyFeedDefs } from '@atproto/api';
+
+type FeedViewPost = AppBskyFeedDefs.FeedViewPost;
 
 export function FollowerList() {
-  const { followers, userProfile } = useStore((state) => state);
+  const { followers, userProfile, isAuthenticated } = useStore();
   const { loading } = useFollowers();
   const [interactions, setInteractions] = useState<Record<string, RecentInteraction>>({});
 
   // Check interactions in the background after followers are loaded
   useEffect(() => {
-    if (!userProfile || !followers.length) return;
+    if (!userProfile || !followers.length || !isAuthenticated) return;
 
     let mounted = true;
 
     async function checkInteractions() {
-      const bluesky = BlueSkyService.getInstance();
-      const newInteractions: Record<string, RecentInteraction> = {};
+      const auth = AuthService.getInstance();
 
       for (const follower of followers) {
         if (!mounted || !userProfile) break;
 
         try {
-          const interaction = await bluesky.checkRecentInteractions(userProfile.did, follower.did);
-          if (interaction.hasInteracted && mounted) {
+          // Get user's recent posts
+          const userPosts = await retryOperation(
+            () => auth.getAgent().getAuthorFeed({ actor: userProfile.did, limit: 50 }),
+            `Get recent posts for ${userProfile.did}`
+          );
+
+          // Get follower's recent posts
+          const followerPosts = await retryOperation(
+            () => auth.getAgent().getAuthorFeed({ actor: follower.did, limit: 50 }),
+            `Get recent posts for ${follower.did}`
+          );
+
+          const result: RecentInteraction = { hasInteracted: false };
+
+          // Check user's posts for mentions of follower
+          for (const post of userPosts.data.feed) {
+            const feedPost = post as FeedViewPost;
+            if (!isWithinLastWeek(feedPost.post.indexedAt)) continue;
+            
+            if (checkPostInteraction(feedPost, follower.handle)) {
+              result.hasInteracted = true;
+              result.lastInteractionDate = feedPost.post.indexedAt;
+              result.interactionType = 'mention';
+              break;
+            }
+          }
+
+          // If no interaction found, check follower's posts for mentions of user
+          if (!result.hasInteracted) {
+            const userHandle = userProfile.handle;
+            for (const post of followerPosts.data.feed) {
+              const feedPost = post as FeedViewPost;
+              if (!isWithinLastWeek(feedPost.post.indexedAt)) continue;
+              
+              if (checkPostInteraction(feedPost, userHandle)) {
+                result.hasInteracted = true;
+                result.lastInteractionDate = feedPost.post.indexedAt;
+                result.interactionType = 'mention';
+                break;
+              }
+            }
+          }
+
+          if (mounted && result.hasInteracted) {
             setInteractions(prev => ({
               ...prev,
-              [follower.did]: interaction
+              [follower.did]: result
             }));
           }
         } catch (error) {
@@ -43,7 +92,7 @@ export function FollowerList() {
     return () => {
       mounted = false;
     };
-  }, [followers, userProfile]);
+  }, [followers, userProfile, isAuthenticated]);
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'No posts yet';
@@ -54,30 +103,30 @@ export function FollowerList() {
     });
   };
 
-  if (loading) {
+  if (!isAuthenticated) {
     return (
-      <div className="w-full max-w-2xl bg-[#242c38] rounded-lg shadow-md p-6 border border-[#2a3441]">
-        <div className="flex flex-col items-center justify-center py-12">
-          <Loader className="w-8 h-8 text-blue-400 animate-spin" />
-          <p className="mt-4 text-gray-400">Loading followers...</p>
-        </div>
-      </div>
+      <EmptyState
+        icon={Users}
+        message="Please log in to see your followers"
+      />
     );
+  }
+
+  if (loading) {
+    return <LoadingState message="Loading followers..." />;
   }
 
   if (!followers.length) {
     return (
-      <div className="w-full max-w-2xl bg-[#242c38] rounded-lg shadow-md p-6 border border-[#2a3441]">
-        <div className="flex flex-col items-center justify-center py-12">
-          <Users className="w-8 h-8 text-gray-500" />
-          <p className="mt-4 text-gray-400">No recent followers found</p>
-        </div>
-      </div>
+      <EmptyState
+        icon={Users}
+        message="No recent followers found"
+      />
     );
   }
 
   return (
-    <div className="w-full max-w-2xl bg-[#242c38] rounded-lg shadow-md p-6 border border-[#2a3441]">
+    <Card className="w-full max-w-2xl">
       <div className="flex items-center mb-6">
         <Users className="w-6 h-6 text-blue-400" />
         <h2 className="ml-2 text-xl font-semibold text-gray-100">
@@ -161,6 +210,6 @@ export function FollowerList() {
           </div>
         ))}
       </div>
-    </div>
+    </Card>
   );
 }

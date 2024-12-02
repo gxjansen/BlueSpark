@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useStore } from '../lib/store';
 import { BlueSkyService } from '../lib/services/bluesky-facade';
-import { Loader } from 'lucide-react';
+import { Card } from './shared/Card';
+import { Button } from './shared/Button';
 import toast from 'react-hot-toast';
 
 export function LoginForm() {
@@ -28,7 +29,7 @@ export function LoginForm() {
 
   return (
     <div className="w-full max-w-md">
-      <div className="bg-[#242c38] rounded-lg shadow-md p-8 border border-[#2a3441]">
+      <Card className="p-8">
         <div className="flex items-center justify-center mb-6">
           <img src="/logo.svg" alt="BlueSpark Logo" className="w-12 h-12" />
           <h1 className="ml-4 text-2xl font-bold text-gray-100">BlueSpark</h1>
@@ -39,11 +40,11 @@ export function LoginForm() {
             Welcome to BlueSpark! 🎉
           </h2>
           <p className="text-gray-300 mb-4">
-            Easily engage with new followers in a meaningful way.
+            Supercharge your BlueSky experience by engaging with your new followers in a meaningful way.
           </p>
           <div className="space-y-2 text-sm text-gray-400">
             <p>✨ Automatically analyze your followers' interests</p>
-            <p>💡 Generate personalized welcome messages (that you can still adjust!)</p>
+            <p>💡 Generate personalized welcome messages</p>
             <p>🤝 Build genuine connections with shared interests</p>
             <p>🎯 Save time while making meaningful interactions</p>
           </div>
@@ -52,7 +53,7 @@ export function LoginForm() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="identifier" className="block text-sm font-medium text-gray-300 mb-1">
-              BlueSky Handle or E-mail
+              BlueSky Handle or Email
             </label>
             <input
               id="identifier"
@@ -91,22 +92,16 @@ export function LoginForm() {
             </p>
           </div>
 
-          <button
+          <Button
             type="submit"
+            fullWidth
+            isLoading={isLoading}
             disabled={isLoading}
-            className="w-full flex items-center justify-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#242c38] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? (
-              <>
-                <Loader className="w-4 h-4 mr-2 animate-spin" />
-                Logging in...
-              </>
-            ) : (
-              'Log in'
-            )}
-          </button>
+            Log in
+          </Button>
         </form>
-      </div>
+      </Card>
     </div>
   );
 }

@@ -1,9 +1,20 @@
-import { AppBskyFeedDefs } from '@atproto/api';
+import { AppBskyFeedDefs, RichText } from '@atproto/api';
 import { AuthService } from './auth';
 import { retryOperation } from '../utils/error-handling';
 import { useStore } from '../store';
 
 type FeedViewPost = AppBskyFeedDefs.FeedViewPost;
+
+interface FollowersResponse {
+  followers: {
+    did: string;
+    handle: string;
+    displayName?: string;
+    avatar?: string;
+    description?: string;
+  }[];
+  cursor?: string;
+}
 
 export class PostsService {
   private static instance: PostsService;
@@ -54,9 +65,14 @@ export class PostsService {
       this.auth.checkAuth();
       this.trackApiCall();
 
+      // Create a RichText instance to handle mentions and other formatting
+      const rt = new RichText({ text });
+      await rt.detectFacets(this.auth.getAgent()); // This will detect mentions, links, etc.
+
       await retryOperation(
         () => this.auth.getAgent().post({
-          text,
+          text: rt.text,
+          facets: rt.facets,
           createdAt: new Date().toISOString(),
         }),
         'Create post'
@@ -90,7 +106,7 @@ export class PostsService {
     }
   }
 
-  async getRecentFollowers(handle: string, limit = 20) {
+  async getRecentFollowers(handle: string, limit = 20, cursor?: string): Promise<FollowersResponse> {
     try {
       this.auth.checkAuth();
       this.trackApiCall();
@@ -98,7 +114,8 @@ export class PostsService {
       const followers = await retryOperation(
         () => this.auth.getAgent().getFollowers({
           actor: handle,
-          limit: limit
+          limit: limit,
+          cursor: cursor
         }),
         `Get followers for ${handle}`
       );
@@ -107,7 +124,10 @@ export class PostsService {
         throw new Error('Failed to fetch followers');
       }
 
-      return followers.data.followers;
+      return {
+        followers: followers.data.followers,
+        cursor: followers.data.cursor
+      };
     } catch (error) {
       console.error('Error fetching followers:', error);
       throw new Error('Failed to fetch recent followers');
