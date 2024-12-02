@@ -73,7 +73,6 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
           topic
         );
       } else {
-        // If this is the first generation, start loading topics immediately
         if (isInitialGeneration) {
           setIsLoadingTopics(true);
           setIsInitialGeneration(false);
@@ -81,7 +80,6 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
 
         message = await AIService.generateMessage(userProfile, followerProfile);
         
-        // Load topics after first message generation
         if (isInitialGeneration) {
           await loadCommonTopics();
         }
@@ -132,8 +130,8 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
       {commonTopics.length > 0 && !isLoadingTopics && (
         <div className="mb-3">
           <div className="flex items-center mb-2">
-            <Tag className="w-4 h-4 mr-1 text-blue-500" />
-            <span className="text-sm text-gray-700">Click any of these shared interests to refine the message:</span>
+            <Tag className="w-4 h-4 mr-1 text-blue-400" />
+            <span className="text-sm text-gray-300">Click any of these shared interests to refine the message:</span>
           </div>
           <div className="flex flex-wrap gap-2">
             {commonTopics.map((topic) => (
@@ -145,8 +143,8 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
                 }}
                 className={`px-2 py-1 text-xs rounded-full transition-colors ${
                   selectedTopic === topic
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-blue-500/20 text-blue-400'
+                    : 'bg-[#2a3441] text-gray-300 hover:bg-[#323e4e]'
                 }`}
               >
                 {topic}
@@ -157,29 +155,29 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
       )}
 
       {isLoadingTopics && (
-        <div className="mb-3 text-sm text-gray-600 flex items-center">
+        <div className="mb-3 text-sm text-gray-400 flex items-center">
           <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
           Finding common topics...
         </div>
       )}
 
       {(messageState.message || isEditing) && (
-        <div className="bg-white p-4 rounded-lg shadow-sm space-y-3">
+        <div className="bg-[#2a3441] p-4 rounded-lg shadow-sm space-y-3 border border-[#323e4e]">
           {isEditing ? (
             <textarea
               value={editedMessage}
               onChange={(e) => setEditedMessage(e.target.value)}
-              className="w-full p-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[100px]"
+              className="w-full p-2 bg-[#323e4e] border border-[#3b4758] rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[100px] text-gray-100"
               placeholder="Edit your welcome message..."
             />
           ) : (
-            <p className="text-gray-800">{messageState.message}</p>
+            <p className="text-gray-300">{messageState.message}</p>
           )}
           
           <div className="flex gap-2">
             <button
               onClick={() => generateMessage(selectedTopic || undefined)}
-              className="flex items-center px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
+              className="flex items-center px-3 py-1 text-sm text-gray-300 hover:text-gray-100"
               disabled={messageState.isGenerating}
             >
               <RefreshCw className={`w-4 h-4 mr-1 ${messageState.isGenerating ? 'animate-spin' : ''}`} />
@@ -191,7 +189,7 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
                   setEditedMessage(messageState.message);
                   setIsEditing(true);
                 }}
-                className="flex items-center px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
+                className="flex items-center px-3 py-1 text-sm text-gray-300 hover:text-gray-100"
               >
                 <Edit2 className="w-4 h-4 mr-1" />
                 Edit
@@ -199,7 +197,7 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
             )}
             <button
               onClick={postMessage}
-              className="flex items-center px-3 py-1 text-sm text-blue-600 hover:text-blue-800"
+              className="flex items-center px-3 py-1 text-sm text-blue-400 hover:text-blue-300"
               disabled={messageState.isGenerating}
             >
               <Send className="w-4 h-4 mr-1" />
@@ -212,14 +210,14 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
       {!messageState.message && !messageState.isGenerating && !isEditing && !isLoadingTopics && (
         <button
           onClick={() => generateMessage()}
-          className="text-blue-600 hover:text-blue-800 text-sm"
+          className="text-blue-400 hover:text-blue-300 text-sm"
         >
           Generate welcome message
         </button>
       )}
 
       {messageState.error && (
-        <div className="text-sm text-red-600 mt-2">
+        <div className="text-sm text-red-400 mt-2">
           Error: {messageState.error}
         </div>
       )}

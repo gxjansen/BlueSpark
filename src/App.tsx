@@ -42,7 +42,7 @@ function App() {
   // Show loading state during auto-login
   if (isAutoLogging) {
     return (
-      <div className="min-h-screen bg-[#111111] flex items-center justify-center">
+      <div className="min-h-screen bg-[#1a2028] flex items-center justify-center">
         <div className="text-center">
           <Loader className="w-8 h-8 text-blue-400 animate-spin mx-auto" />
           <p className="mt-4 text-gray-400">Resuming session...</p>
@@ -53,17 +53,17 @@ function App() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#111111] flex flex-col">
+      <div className="min-h-screen bg-[#1a2028] flex flex-col">
         <div className="flex-grow flex items-center justify-center p-4">
           <LoginForm />
         </div>
-        <footer className="p-4 text-center text-sm text-gray-500">
+        <footer className="p-4 text-center text-sm text-gray-400">
           Made by{' '}
           <a 
             href="https://bsky.app/profile/gui.do" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800"
+            className="text-blue-400 hover:text-blue-300"
           >
             Guido X Jansen
           </a>
@@ -73,7 +73,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-[#1a2028] flex flex-col">
       <div className="flex-grow p-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-6">
@@ -83,11 +83,11 @@ function App() {
                 alt="BlueSpark Logo" 
                 className="w-10 h-10 mr-3"
               />
-              <h1 className="text-2xl font-bold text-gray-900">BlueSpark</h1>
+              <h1 className="text-2xl font-bold text-gray-100">BlueSpark</h1>
             </div>
             <button
               onClick={logout}
-              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800"
+              className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-gray-100"
             >
               Log out
             </button>
@@ -107,13 +107,13 @@ function App() {
         </div>
       </div>
 
-      <footer className="p-4 text-center text-sm text-gray-500">
+      <footer className="p-4 text-center text-sm text-gray-400">
         Made by{' '}
         <a 
           href="https://bsky.app/profile/gui.do" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="text-blue-600 hover:text-blue-800"
+          className="text-blue-400 hover:text-blue-300"
         >
           Guido X Jansen
         </a>

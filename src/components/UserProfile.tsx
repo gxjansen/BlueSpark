@@ -107,7 +107,7 @@ export function UserProfile() {
       <ApiStats />
 
       {/* User Profile Box */}
-      <div className="bg-white rounded-lg shadow-sm p-4 space-y-6">
+      <div className="bg-[#242c38] rounded-lg shadow-md p-4 space-y-6 border border-[#2a3441]">
         {/* User Profile Header */}
         <div className="flex items-center space-x-3">
           {userProfile.avatar ? (
@@ -117,43 +117,43 @@ export function UserProfile() {
               className="w-12 h-12 rounded-full"
             />
           ) : (
-            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-              <span className="text-blue-600 text-lg">
+            <div className="w-12 h-12 rounded-full bg-[#2a3441] flex items-center justify-center">
+              <span className="text-blue-400 text-lg">
                 {(userProfile.displayName || userProfile.handle)[0].toUpperCase()}
               </span>
             </div>
           )}
           <div>
-            <h2 className="font-semibold">{userProfile.displayName}</h2>
-            <p className="text-sm text-gray-600">@{userProfile.handle}</p>
+            <h2 className="font-semibold text-gray-100">{userProfile.displayName}</h2>
+            <p className="text-sm text-gray-400">@{userProfile.handle}</p>
           </div>
         </div>
 
         {/* Profile Analysis */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-700">Profile Analysis</h3>
+            <h3 className="text-sm font-semibold text-gray-300">Profile Analysis</h3>
             <button
               onClick={analyzeProfile}
               disabled={isAnalyzing}
-              className="text-blue-600 hover:text-blue-800"
+              className="text-blue-400 hover:text-blue-300"
             >
               <RefreshCw className={`w-4 h-4 ${isAnalyzing ? 'animate-spin' : ''}`} />
             </button>
           </div>
           
           {isAnalyzing ? (
-            <p className="text-sm text-gray-600">Analyzing your profile...</p>
+            <p className="text-sm text-gray-400">Analyzing your profile...</p>
           ) : profileAnalysis ? (
             <div className="text-sm space-y-2">
-              <p className="text-gray-700">{profileAnalysis.summary}</p>
+              <p className="text-gray-300">{profileAnalysis.summary}</p>
               <div className="space-y-1">
-                <p className="text-gray-600">Main topics:</p>
+                <p className="text-gray-400">Main topics:</p>
                 <div className="flex flex-wrap gap-1">
                   {profileAnalysis.mainTopics.map((topic, index) => (
                     <span
                       key={index}
-                      className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs"
+                      className="px-2 py-1 bg-[#2a3441] text-blue-400 rounded-full text-xs"
                     >
                       {topic}
                     </span>
@@ -169,12 +169,12 @@ export function UserProfile() {
       </div>
 
       {/* Welcome Message Settings Box */}
-      <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
-        <h3 className="text-lg font-semibold text-gray-800">Welcome Message Settings</h3>
+      <div className="bg-[#242c38] rounded-lg shadow-md p-4 space-y-4 border border-[#2a3441]">
+        <h3 className="text-lg font-semibold text-gray-100">Welcome Message Settings</h3>
         
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Tone of Voice</label>
+            <label className="text-sm font-medium text-gray-300">Tone of Voice</label>
             <div className="grid grid-cols-2 gap-2">
               {toneOptions.map((tone) => (
                 <button
@@ -182,12 +182,12 @@ export function UserProfile() {
                   onClick={() => handleToneChange(tone.value)}
                   className={`group relative px-3 py-2 text-sm rounded-md capitalize ${
                     welcomeSettings.toneOfVoice === tone.value
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                      ? 'bg-blue-500/20 text-blue-400'
+                      : 'bg-[#2a3441] text-gray-300 hover:bg-[#323e4e]'
                   }`}
                 >
                   {tone.label}
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-[#2a3441] text-gray-100 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-[#323e4e]">
                     {tone.description}
                   </div>
                 </button>
@@ -196,7 +196,7 @@ export function UserProfile() {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="customPrompt" className="text-sm font-medium text-gray-700">
+            <label htmlFor="customPrompt" className="text-sm font-medium text-gray-300">
               Additional Instructions
             </label>
             <textarea
@@ -205,7 +205,7 @@ export function UserProfile() {
               onChange={handleCustomPromptChange}
               maxLength={200}
               placeholder="Add any specific instructions for generating welcome messages..."
-              className="w-full h-24 px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full h-24 px-3 py-2 text-sm bg-[#2a3441] border border-[#323e4e] rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-100 placeholder-gray-500"
             />
             <p className="text-xs text-gray-500 text-right">
               {remainingChars} characters remaining

@@ -22,12 +22,11 @@ export function FollowerList() {
       const newInteractions: Record<string, RecentInteraction> = {};
 
       for (const follower of followers) {
-        if (!mounted || !userProfile) break; // Stop if component unmounted or userProfile is null
+        if (!mounted || !userProfile) break;
 
         try {
           const interaction = await bluesky.checkRecentInteractions(userProfile.did, follower.did);
           if (interaction.hasInteracted && mounted) {
-            // Update interactions one at a time as they come in
             setInteractions(prev => ({
               ...prev,
               [follower.did]: interaction
@@ -57,10 +56,10 @@ export function FollowerList() {
 
   if (loading) {
     return (
-      <div className="w-full max-w-2xl bg-white rounded-lg shadow-md p-6">
+      <div className="w-full max-w-2xl bg-[#242c38] rounded-lg shadow-md p-6 border border-[#2a3441]">
         <div className="flex flex-col items-center justify-center py-12">
-          <Loader className="w-8 h-8 text-blue-500 animate-spin" />
-          <p className="mt-4 text-gray-600">Loading followers...</p>
+          <Loader className="w-8 h-8 text-blue-400 animate-spin" />
+          <p className="mt-4 text-gray-400">Loading followers...</p>
         </div>
       </div>
     );
@@ -68,27 +67,27 @@ export function FollowerList() {
 
   if (!followers.length) {
     return (
-      <div className="w-full max-w-2xl bg-white rounded-lg shadow-md p-6">
+      <div className="w-full max-w-2xl bg-[#242c38] rounded-lg shadow-md p-6 border border-[#2a3441]">
         <div className="flex flex-col items-center justify-center py-12">
-          <Users className="w-8 h-8 text-gray-400" />
-          <p className="mt-4 text-gray-600">No recent followers found</p>
+          <Users className="w-8 h-8 text-gray-500" />
+          <p className="mt-4 text-gray-400">No recent followers found</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-2xl bg-white rounded-lg shadow-md p-6">
+    <div className="w-full max-w-2xl bg-[#242c38] rounded-lg shadow-md p-6 border border-[#2a3441]">
       <div className="flex items-center mb-6">
-        <Users className="w-6 h-6 text-blue-500" />
-        <h2 className="ml-2 text-xl font-semibold text-gray-800">Recent Followers</h2>
+        <Users className="w-6 h-6 text-blue-400" />
+        <h2 className="ml-2 text-xl font-semibold text-gray-100">Recent Followers</h2>
       </div>
 
       <div className="space-y-4">
         {followers.map((follower) => (
           <div
             key={follower.did}
-            className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+            className="p-4 border border-[#2a3441] rounded-lg hover:bg-[#2a3441] transition-colors"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -99,20 +98,20 @@ export function FollowerList() {
                     className="w-10 h-10 rounded-full"
                   />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                    <span className="text-blue-600 text-lg">
+                  <div className="w-10 h-10 rounded-full bg-[#2a3441] flex items-center justify-center">
+                    <span className="text-blue-400 text-lg">
                       {(follower.displayName || follower.handle)[0].toUpperCase()}
                     </span>
                   </div>
                 )}
                 <div>
-                  <h3 className="font-medium text-gray-900">{follower.displayName || follower.handle}</h3>
-                  <p className="text-sm text-gray-500">@{follower.handle}</p>
+                  <h3 className="font-medium text-gray-100">{follower.displayName || follower.handle}</h3>
+                  <p className="text-sm text-gray-400">@{follower.handle}</p>
                 </div>
               </div>
               
               {/* Profile Stats */}
-              <div className="flex items-center space-x-4 text-sm text-gray-500">
+              <div className="flex items-center space-x-4 text-sm text-gray-400">
                 <div className="flex items-center">
                   <UserRound className="w-4 h-4 mr-1" />
                   <span>{follower.followersCount}</span>
@@ -126,12 +125,12 @@ export function FollowerList() {
             </div>
 
             {follower.description && (
-              <p className="mt-2 text-sm text-gray-600 ml-13">{follower.description}</p>
+              <p className="mt-2 text-sm text-gray-300 ml-13">{follower.description}</p>
             )}
 
             {/* Recent Interaction Warning */}
             {interactions[follower.did]?.hasInteracted && (
-              <div className="mt-2 flex items-center text-amber-600 bg-amber-50 p-2 rounded-md">
+              <div className="mt-2 flex items-center text-amber-400 bg-amber-500/10 p-2 rounded-md border border-amber-500/20">
                 <AlertCircle className="w-4 h-4 mr-2" />
                 <span className="text-sm">
                   You've interacted with this user in the past week
@@ -149,7 +148,7 @@ export function FollowerList() {
                 <span>Joined {formatDate(follower.joinedAt)}</span>
               </div>
               <span>·</span>
-              <span className={follower.lastPostedAt ? 'text-gray-500' : 'text-gray-400 italic'}>
+              <span className={follower.lastPostedAt ? 'text-gray-500' : 'text-gray-600 italic'}>
                 {follower.lastPostedAt ? `Last post ${formatDate(follower.lastPostedAt)}` : 'No posts yet'}
               </span>
             </div>
