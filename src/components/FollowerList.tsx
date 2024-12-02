@@ -1,6 +1,6 @@
 import React from 'react';
 import { useStore } from '../lib/store';
-import { Users, Loader, UserRound, Calendar } from 'lucide-react';
+import { Users, Loader, UserRound, Calendar, UserPlus2, Users2 } from 'lucide-react';
 import { MessageGenerator } from './MessageGenerator';
 import { useFollowers } from '../hooks/useFollowers';
 
@@ -9,7 +9,7 @@ export function FollowerList() {
   const { loading } = useFollowers();
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Unknown';
+    if (!dateString) return 'No posts yet';
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -75,14 +75,29 @@ export function FollowerList() {
               
               {/* Profile Stats */}
               <div className="flex items-center space-x-4 text-sm text-gray-500">
-                <div className="flex items-center">
-                  <UserRound className="w-4 h-4 mr-1" />
-                  <span>{follower.followersCount}</span>
-                  <span className="mx-1">·</span>
-                  <span>{follower.followsCount}</span>
-                </div>
-                <div>
-                  <span>{follower.postsCount} posts</span>
+                <div className="flex items-center space-x-3">
+                  {/* Followers count */}
+                  <div className="flex items-center group relative">
+                    <Users2 className="w-4 h-4 mr-1" />
+                    <span>{follower.followersCount}</span>
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                      Followers
+                    </div>
+                  </div>
+
+                  {/* Following count */}
+                  <div className="flex items-center group relative">
+                    <UserPlus2 className="w-4 h-4 mr-1" />
+                    <span>{follower.followsCount}</span>
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                      Following
+                    </div>
+                  </div>
+
+                  {/* Posts count */}
+                  <div>
+                    <span>{follower.postsCount} posts</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -97,12 +112,10 @@ export function FollowerList() {
                 <Calendar className="w-3 h-3 mr-1" />
                 <span>Joined {formatDate(follower.joinedAt)}</span>
               </div>
-              {follower.lastPostedAt && (
-                <>
-                  <span>·</span>
-                  <span>Last post {formatDate(follower.lastPostedAt)}</span>
-                </>
-              )}
+              <span>·</span>
+              <span className={follower.lastPostedAt ? 'text-gray-500' : 'text-gray-400 italic'}>
+                {follower.lastPostedAt ? `Last post ${formatDate(follower.lastPostedAt)}` : 'No posts yet'}
+              </span>
             </div>
 
             <div className="mt-4">
