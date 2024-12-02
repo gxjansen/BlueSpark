@@ -1,6 +1,11 @@
 import React from 'react';
 import { useStore } from '../lib/store';
-import { Activity, Zap } from 'lucide-react';
+import { Activity } from 'lucide-react';
+
+const numberFormatter = new Intl.NumberFormat('en-US', {
+  notation: 'compact',
+  maximumFractionDigits: 1
+});
 
 export function ApiStats() {
   const { apiStats } = useStore();
@@ -14,14 +19,15 @@ export function ApiStats() {
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <span className="text-gray-400">BlueSky API calls:</span>
-          <span className="text-gray-300">{apiStats.blueskyApiCalls}</span>
+          <span className="text-gray-300 tabular-nums">
+            {numberFormatter.format(apiStats.blueskyApiCalls)}
+          </span>
         </div>
         <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center">
-            <Zap className="w-4 h-4 mr-1 text-blue-400" />
-            <span className="text-gray-400">AI tokens used:</span>
-          </div>
-          <span className="text-gray-300">{apiStats.openRouterTokens}</span>
+          <span className="text-gray-400">AI tokens used:</span>
+          <span className="text-gray-300 tabular-nums">
+            {numberFormatter.format(apiStats.openRouterTokens)}
+          </span>
         </div>
       </div>
     </div>
