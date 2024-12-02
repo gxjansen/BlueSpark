@@ -67,6 +67,24 @@ function App() {
           >
             Guido X Jansen
           </a>
+          {' | '}
+          <a 
+            href="https://www.gui.do/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:text-blue-300"
+          >
+            gui.do
+          </a>
+          {' | '}
+          <a 
+            href="https://github.com/gxjansen/BlueSpark/issues" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:text-blue-300"
+          >
+            Feedback & Issues
+          </a>
         </footer>
       </div>
     );
@@ -116,6 +134,24 @@ function App() {
           className="text-blue-400 hover:text-blue-300"
         >
           Guido X Jansen
+        </a>
+        {' | '}
+        <a 
+          href="https://www.gui.do/" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-blue-400 hover:text-blue-300"
+        >
+          gui.do
+        </a>
+        {' | '}
+        <a 
+          href="https://github.com/gxjansen/BlueSpark/issues" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-blue-400 hover:text-blue-300"
+        >
+          Feedback & Issues
         </a>
       </footer>
     </div>

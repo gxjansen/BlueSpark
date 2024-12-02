@@ -98,7 +98,7 @@ export class AIService {
     }
 
     const prompt = `
-      Analyze the following user profile and their last 200 posts. Provide a comprehensive analysis including:
+      Analyze the following user profile and their last 200 posts. Provide a comprehensive analysis directly addressing the user, including:
       1. A brief summary of their online presence and communication style
       2. Main topics they discuss
       3. Writing style characteristics
@@ -110,9 +110,9 @@ export class AIService {
       Bio: ${userProfile.description || 'No bio'}
       Recent posts: ${(userProfile.posts || []).map((p: any) => p.text || '').join('\n')}
 
-      Format the response as JSON with the following structure:
+      Format the response as JSON with the following structure, using direct address (e.g., "You appear to be..." instead of "The user appears to be..."):
       {
-        "summary": "Brief overview of their presence",
+        "summary": "Brief overview directly addressing the user",
         "mainTopics": ["topic1", "topic2", "topic3"],
         "writingStyle": "Description of their writing style",
         "commonThemes": ["theme1", "theme2", "theme3"],
