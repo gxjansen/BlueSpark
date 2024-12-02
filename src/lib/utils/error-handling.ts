@@ -1,8 +1,27 @@
+import { XRPCError } from '@atproto/xrpc';
+
 export class AuthenticationError extends Error {
   constructor(message = 'Not authenticated. Please log in first.') {
     super(message);
     this.name = 'AuthenticationError';
   }
+}
+
+/**
+ * Checks if an error is a rate limit error
+ */
+function isRateLimitError(error: unknown): boolean {
+  return error instanceof XRPCError && error.status === 429;
+}
+
+/**
+ * Gets a user-friendly error message
+ */
+function getErrorMessage(error: unknown): string {
+  if (isRateLimitError(error)) {
+    return 'Too many login attempts. Please wait a moment and try again.';
+  }
+  return error instanceof Error ? error.message : 'An unknown error occurred';
 }
 
 /**
@@ -26,9 +45,9 @@ export async function retryOperation<T>(
         error
       );
       
-      // Don't retry authentication errors
-      if (error instanceof AuthenticationError) {
-        throw error;
+      // Don't retry rate limit or authentication errors
+      if (isRateLimitError(error) || error instanceof AuthenticationError) {
+        throw new Error(getErrorMessage(error));
       }
       
       if (attempt < maxRetries - 1) {
@@ -38,5 +57,5 @@ export async function retryOperation<T>(
     }
   }
   
-  throw lastError || new Error(`${operationName} failed after ${maxRetries} attempts`);
+  throw new Error(getErrorMessage(lastError));
 }

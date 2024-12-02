@@ -1,69 +1,12 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useStore } from './lib/store';
 import { LoginForm } from './components/LoginForm';
 import { FollowerList } from './components/FollowerList';
 import { UserProfile } from './components/UserProfile';
-import { BlueSkyService } from './lib/services/bluesky-facade';
 import { Loader } from 'lucide-react';
-import { AppBskyFeedDefs, AppBskyFeedPost } from '@atproto/api';
-import toast from 'react-hot-toast';
 
-type FeedViewPost = AppBskyFeedDefs.FeedViewPost;
-type PostRecord = AppBskyFeedPost.Record;
-
-function App() {
-  const { 
-    isAuthenticated, 
-    credentials, 
-    isAutoLogging,
-    setCredentials, 
-    setAutoLogging,
-    logout,
-    setUserProfile
-  } = useStore();
-
-  // Attempt automatic login if we have stored credentials
-  useEffect(() => {
-    async function autoLogin() {
-      if (credentials && !isAuthenticated && !isAutoLogging) {
-        setAutoLogging(true);
-        try {
-          const bluesky = BlueSkyService.getInstance();
-          const session = await bluesky.resumeSession(credentials);
-          setCredentials(credentials); // Re-set to trigger state update
-          
-          // Load user profile after successful login
-          const profile = await bluesky.getProfile(credentials.identifier);
-          const posts = await bluesky.getUserPosts(profile.did);
-          
-          setUserProfile({
-            did: profile.did,
-            handle: profile.handle,
-            displayName: profile.displayName || profile.handle,
-            description: profile.description || '',
-            avatar: profile.avatar,
-            posts: posts.map((post: FeedViewPost) => ({
-              text: (post.post.record as PostRecord).text,
-              createdAt: (post.post.record as PostRecord).createdAt
-            })),
-            followersCount: profile.followersCount || 0,
-            followsCount: profile.followsCount || 0,
-            postsCount: profile.postsCount || 0,
-            joinedAt: posts[0] ? (posts[0].post.record as PostRecord).createdAt : new Date().toISOString(),
-            lastPostedAt: posts[0] ? (posts[0].post.record as PostRecord).createdAt : undefined
-          });
-        } catch (error) {
-          console.error('Auto-login failed:', error);
-          toast.error('Stored login expired. Please log in again.');
-          logout(); // Clear invalid credentials
-        } finally {
-          setAutoLogging(false);
-        }
-      }
-    }
-
-    autoLogin();
-  }, [credentials, isAuthenticated, isAutoLogging, setCredentials, setAutoLogging, logout, setUserProfile]);
+export default function App() {
+  const { isAuthenticated, isAutoLogging } = useStore();
 
   // Show loading state during auto-login
   if (isAutoLogging) {
@@ -123,14 +66,14 @@ function App() {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center">
               <img 
-                src="/logo.svg" 
+                src="/logo-white.svg" 
                 alt="BlueSpark Logo" 
                 className="w-10 h-10 mr-3"
               />
               <h1 className="text-2xl font-bold text-gray-100">BlueSpark</h1>
             </div>
             <button
-              onClick={logout}
+              onClick={() => useStore.getState().logout()}
               className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-gray-100"
             >
               Log out
@@ -183,5 +126,3 @@ function App() {
     </div>
   );
 }
-
-export default App;

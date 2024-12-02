@@ -10,7 +10,7 @@ export class AuthService {
   private constructor() {
     this.agent = new BskyAgent({
       service: 'https://bsky.social',
-      persistSession: (evt, sess) => {
+      persistSession: (_evt, sess) => {
         if (sess) {
           this.agent.session = sess;
         }
@@ -39,20 +39,23 @@ export class AuthService {
   async login(identifier: string, password: string) {
     try {
       this.trackApiCall();
-      const session = await retryOperation(
-        () => this.agent.login({ identifier, password }),
-        'Login'
-      );
+      // Only try once for login to prevent rate limiting
+      const session = await this.agent.login({ identifier, password });
       return session;
     } catch (error) {
       console.error('Login error:', error);
-      throw new Error('Failed to login. Please check your credentials.');
+      // Let error-handling.ts handle the error message
+      throw error;
     }
   }
 
   async resumeSession(credentials: BlueSkyCredentials) {
     try {
-      const session = await this.login(credentials.identifier, credentials.password);
+      // Use retryOperation for session resume since it's less likely to hit rate limits
+      const session = await retryOperation(
+        () => this.login(credentials.identifier, credentials.password),
+        'Resume session'
+      );
       return session;
     } catch (error) {
       console.error('Failed to resume session:', error);

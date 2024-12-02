@@ -1,73 +1,84 @@
 import React, { useState } from 'react';
 import { useStore } from '../lib/store';
-import { BlueSkyService } from '../lib/services/bluesky-facade';
 import { Card } from './shared/Card';
-import { Button } from './shared/Button';
+import { Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export function LoginForm() {
+  const login = useStore((state) => state.login);
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { setCredentials } = useStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    if (!identifier || !password) {
+      toast.error('Please enter your username and password');
+      return;
+    }
 
+    setIsLoading(true);
     try {
-      const bluesky = BlueSkyService.getInstance();
-      await bluesky.login(identifier, password);
-      setCredentials({ identifier, password });
-      toast.success('Logged in successfully!');
+      await login(identifier, password);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to login';
       toast.error(message);
+    } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="w-full max-w-md">
-      <Card className="p-8">
-        <div className="flex items-center justify-center mb-6">
-          <img src="/logo.svg" alt="BlueSpark Logo" className="w-12 h-12" />
-          <h1 className="ml-4 text-2xl font-bold text-gray-100">BlueSpark</h1>
+    <Card>
+      <div className="w-full max-w-md">
+        <div className="flex items-center justify-center mb-8">
+          <img 
+            src="/logo-white.svg" 
+            alt="BlueSpark Logo" 
+            className="w-12 h-12 mr-4"
+          />
+          <h1 className="text-3xl font-bold text-gray-100">BlueSpark</h1>
         </div>
 
-        <div className="mb-8 text-center">
-          <h2 className="text-xl font-semibold text-gray-100 mb-4">
-            Welcome to BlueSpark! 🎉
-          </h2>
-          <p className="text-gray-300 mb-4">
-            Supercharge your BlueSky experience by engaging with your new followers in a meaningful way.
+        <div className="mb-8 space-y-4 text-gray-300">
+          <p>
+            Easily engage with new Bluesky followers by sending them personalized welcome messages.
           </p>
-          <div className="space-y-2 text-sm text-gray-400">
-            <p>✨ Automatically analyze your followers' interests</p>
-            <p>💡 Generate personalized welcome messages</p>
-            <p>🤝 Build genuine connections with shared interests</p>
-            <p>🎯 Save time while making meaningful interactions</p>
-          </div>
+          <ul className="space-y-2">
+            <li className="flex items-start">
+              <span className="mr-2">👋</span>
+              <span>Automatically detect new followers</span>
+            </li>
+            <li className="flex items-start">
+              <span className="mr-2">💬</span>
+              <span>Generate personalized welcome messages</span>
+            </li>
+            <li className="flex items-start">
+              <span className="mr-2">🎯</span>
+              <span>Include shared interests in conversations</span>
+            </li>
+          </ul>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="identifier" className="block text-sm font-medium text-gray-300 mb-1">
-              BlueSky Handle or Email
+            <label htmlFor="identifier" className="block text-sm font-medium text-gray-300">
+              Username or Email
             </label>
             <input
               id="identifier"
               type="text"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
-              className="w-full px-3 py-2 bg-[#2a3441] border border-[#323e4e] rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-100 placeholder-gray-500"
-              placeholder="e.g., you.bsky.social"
-              required
+              className="mt-1 block w-full px-3 py-2 bg-[#2a3441] border border-[#3b4758] rounded-md text-gray-100 placeholder-gray-400
+                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="username.bsky.social"
+              disabled={isLoading}
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-300">
               App Password
             </label>
             <input
@@ -75,11 +86,12 @@ export function LoginForm() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 bg-[#2a3441] border border-[#323e4e] rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-100 placeholder-gray-500"
-              placeholder="Your BlueSky app password"
-              required
+              className="mt-1 block w-full px-3 py-2 bg-[#2a3441] border border-[#3b4758] rounded-md text-gray-100 placeholder-gray-400
+                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="xxxx-xxxx-xxxx-xxxx"
+              disabled={isLoading}
             />
-            <p className="mt-1 text-sm text-gray-400">
+            <p className="mt-2 text-sm text-gray-400">
               Create an app password at{' '}
               <a
                 href="https://bsky.app/settings/app-passwords"
@@ -92,16 +104,23 @@ export function LoginForm() {
             </p>
           </div>
 
-          <Button
+          <button
             type="submit"
-            fullWidth
-            isLoading={isLoading}
             disabled={isLoading}
+            className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white
+              bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
           >
-            Log in
-          </Button>
+            {isLoading ? (
+              <>
+                <Loader className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" />
+                Logging in...
+              </>
+            ) : (
+              'Log in'
+            )}
+          </button>
         </form>
-      </Card>
-    </div>
+      </div>
+    </Card>
   );
 }
