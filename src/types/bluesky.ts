@@ -55,3 +55,38 @@ export interface RecentInteraction {
   hasInteracted: boolean;
   lastInteractionDate?: string;
 }
+
+// BlueSky API Types
+export interface PostAuthor {
+  did: string;
+}
+
+export interface ThreadPost {
+  author: PostAuthor;
+}
+
+export interface ThreadView {
+  posts?: ThreadPost[];
+}
+
+export interface PostReplyRef {
+  parent: {
+    author: PostAuthor;
+  };
+}
+
+export interface PostRecord {
+  text: string;
+  createdAt: string;
+  facets?: PostFacet[];
+}
+
+export interface PostFacet {
+  index: { start: number; end: number };
+  features: PostFeature[];
+}
+
+export interface PostFeature {
+  $type: string;
+  did?: string;
+}

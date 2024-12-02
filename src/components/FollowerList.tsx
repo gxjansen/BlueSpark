@@ -3,7 +3,7 @@ import { useStore } from '../lib/store';
 import { Users, Loader, UserRound, Calendar, AlertCircle } from 'lucide-react';
 import { MessageGenerator } from './MessageGenerator';
 import { useFollowers } from '../hooks/useFollowers';
-import { BlueSkyService } from '../lib/bluesky';
+import { BlueSkyService } from '../lib/services/bluesky-facade';
 import { RecentInteraction } from '../types/bluesky';
 
 export function FollowerList() {
@@ -80,7 +80,9 @@ export function FollowerList() {
     <div className="w-full max-w-2xl bg-[#242c38] rounded-lg shadow-md p-6 border border-[#2a3441]">
       <div className="flex items-center mb-6">
         <Users className="w-6 h-6 text-blue-400" />
-        <h2 className="ml-2 text-xl font-semibold text-gray-100">Recent Followers</h2>
+        <h2 className="ml-2 text-xl font-semibold text-gray-100">
+          Recent Followers ({followers.length})
+        </h2>
       </div>
 
       <div className="space-y-4">

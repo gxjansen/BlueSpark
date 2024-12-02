@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { RefreshCw, Send, Edit2, Tag } from 'lucide-react';
 import { useStore } from '../lib/store';
 import { AIService } from '../lib/ai';
-import { BlueSkyService } from '../lib/bluesky';
+import { BlueSkyService } from '../lib/services/bluesky-facade';
 import { ContentAnalyzer } from '../lib/analysis';
 import toast from 'react-hot-toast';
 
@@ -28,6 +28,7 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [isLoadingTopics, setIsLoadingTopics] = useState(false);
   const [isInitialGeneration, setIsInitialGeneration] = useState(true);
+  const [isPosted, setIsPosted] = useState(false);
 
   const loadCommonTopics = async () => {
     if (userProfile && followers) {
@@ -90,7 +91,6 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
       }
       setMessage(followerHandle, message);
       setEditedMessage(message);
-      setIsEditing(true);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
       console.error('Message generation error:', error);
@@ -115,14 +115,24 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
       }
 
       await bluesky.createPost(messageToPost);
-      toast.success('Message posted successfully!');
-      setIsEditing(false);
+      setIsPosted(true);
+      toast.success('Welcome message posted successfully!');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to post message';
       console.error('Post error:', error);
       toast.error(errorMessage);
     }
   };
+
+  if (isPosted) {
+    return (
+      <div className="mt-4">
+        <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4 text-green-400">
+          <p className="text-sm">Welcome message posted successfully! 🎉</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-4">
