@@ -1,12 +1,21 @@
 import React from 'react';
 import { useStore } from '../lib/store';
-import { Users, Loader } from 'lucide-react';
+import { Users, Loader, UserRound, Calendar } from 'lucide-react';
 import { MessageGenerator } from './MessageGenerator';
 import { useFollowers } from '../hooks/useFollowers';
 
 export function FollowerList() {
   const followers = useStore((state) => state.followers);
   const { loading } = useFollowers();
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'Unknown';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
 
   if (loading) {
     return (
@@ -45,7 +54,6 @@ export function FollowerList() {
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                {/* Avatar */}
                 {follower.avatar ? (
                   <img
                     src={follower.avatar}
@@ -59,19 +67,45 @@ export function FollowerList() {
                     </span>
                   </div>
                 )}
-                {/* User Info */}
                 <div>
-                  <h3 className="font-medium text-gray-900">
-                    {follower.displayName || follower.handle}
-                  </h3>
+                  <h3 className="font-medium text-gray-900">{follower.displayName || follower.handle}</h3>
                   <p className="text-sm text-gray-500">@{follower.handle}</p>
                 </div>
               </div>
+              
+              {/* Profile Stats */}
+              <div className="flex items-center space-x-4 text-sm text-gray-500">
+                <div className="flex items-center">
+                  <UserRound className="w-4 h-4 mr-1" />
+                  <span>{follower.followersCount}</span>
+                  <span className="mx-1">·</span>
+                  <span>{follower.followsCount}</span>
+                </div>
+                <div>
+                  <span>{follower.postsCount} posts</span>
+                </div>
+              </div>
             </div>
+
             {follower.description && (
               <p className="mt-2 text-sm text-gray-600 ml-13">{follower.description}</p>
             )}
-            <div className="ml-13">
+
+            {/* Dates */}
+            <div className="mt-2 flex items-center space-x-4 text-xs text-gray-500">
+              <div className="flex items-center">
+                <Calendar className="w-3 h-3 mr-1" />
+                <span>Joined {formatDate(follower.joinedAt)}</span>
+              </div>
+              {follower.lastPostedAt && (
+                <>
+                  <span>·</span>
+                  <span>Last post {formatDate(follower.lastPostedAt)}</span>
+                </>
+              )}
+            </div>
+
+            <div className="mt-4">
               <MessageGenerator followerHandle={follower.handle} />
             </div>
           </div>

@@ -3,10 +3,14 @@ import { useStore } from '../lib/store';
 import { BlueSkyService } from '../lib/bluesky';
 import toast from 'react-hot-toast';
 import { FollowerProfile } from '../types/bluesky';
-import type { AppBskyFeedDefs, AppBskyFeedPost } from '@atproto/api';
+import type { AppBskyFeedDefs } from '@atproto/api';
 
 type FeedViewPost = AppBskyFeedDefs.FeedViewPost;
-type PostRecord = AppBskyFeedPost.Record;
+
+interface PostRecord {
+  text: string;
+  createdAt: string;
+}
 
 export function useFollowers() {
   const [loading, setLoading] = useState(true);
@@ -15,17 +19,11 @@ export function useFollowers() {
   const getAvatarUrl = (rawUrl: string | undefined) => {
     if (!rawUrl) return undefined;
     
-    // Log the raw URL for debugging
-    console.log('Processing avatar URL:', rawUrl);
-    
-    // The raw URL might be in the format: at://did:plc:xxx/app.bsky.embed.images/yyy
     try {
       const url = new URL(rawUrl);
       if (url.protocol === 'at:') {
-        // Extract the cid from the path
         const parts = url.pathname.split('/');
         const cid = parts[parts.length - 1];
-        const did = url.hostname;
         return `https://cdn.bsky.app/img/avatar/plain/${cid}`;
       }
       return rawUrl;
@@ -33,6 +31,12 @@ export function useFollowers() {
       console.error('Error processing avatar URL:', error);
       return undefined;
     }
+  };
+
+  const getPostDate = (post: FeedViewPost | undefined): string | undefined => {
+    if (!post?.post?.record || typeof post.post.record !== 'object') return undefined;
+    const record = post.post.record as { createdAt?: string };
+    return record.createdAt;
   };
 
   useEffect(() => {
@@ -50,40 +54,66 @@ export function useFollowers() {
         const userProfile: FollowerProfile = {
           did: userProfileData.did,
           handle: userProfileData.handle,
-          displayName: userProfileData.displayName,
-          description: userProfileData.description,
+          displayName: userProfileData.displayName || userProfileData.handle,
+          description: userProfileData.description || '',
           avatar: getAvatarUrl(userProfileData.avatar),
           posts: (userPosts as FeedViewPost[]).map(feedPost => ({
             text: (feedPost.post.record as PostRecord).text,
             createdAt: (feedPost.post.record as PostRecord).createdAt
-          }))
+          })),
+          followersCount: userProfileData.followersCount || 0,
+          followsCount: userProfileData.followsCount || 0,
+          postsCount: userProfileData.postsCount || 0,
+          joinedAt: getPostDate(userPosts[0]) || new Date().toISOString(),
+          lastPostedAt: getPostDate(userPosts[0])
         };
         setUserProfile(userProfile);
 
         // Get followers
         const followersData = await bluesky.getRecentFollowers(credentials.identifier);
-        
-        // Get detailed profile and posts for each follower
-        const followersWithDetails = await Promise.all(
-          followersData.map(async (follower) => {
+        const validFollowers: FollowerProfile[] = [];
+
+        // Process followers sequentially to avoid overwhelming the API
+        for (const follower of followersData) {
+          try {
             const profile = await bluesky.getProfile(follower.handle);
             const posts = await bluesky.getUserPosts(follower.did);
             
-            return {
+            validFollowers.push({
               did: follower.did,
               handle: follower.handle,
-              displayName: profile.displayName,
-              description: profile.description,
+              displayName: profile.displayName || follower.handle,
+              description: profile.description || '',
               avatar: getAvatarUrl(profile.avatar),
               posts: (posts as FeedViewPost[]).map(feedPost => ({
                 text: (feedPost.post.record as PostRecord).text,
                 createdAt: (feedPost.post.record as PostRecord).createdAt
-              }))
-            };
-          })
-        );
+              })),
+              followersCount: profile.followersCount || 0,
+              followsCount: profile.followsCount || 0,
+              postsCount: profile.postsCount || 0,
+              joinedAt: getPostDate(posts[0]) || new Date().toISOString(),
+              lastPostedAt: getPostDate(posts[0])
+            });
+          } catch (error) {
+            console.warn(`Failed to fetch details for follower ${follower.handle}:`, error);
+            validFollowers.push({
+              did: follower.did,
+              handle: follower.handle,
+              displayName: follower.handle,
+              description: '',
+              avatar: undefined,
+              posts: [],
+              followersCount: 0,
+              followsCount: 0,
+              postsCount: 0,
+              joinedAt: new Date().toISOString(),
+              lastPostedAt: undefined
+            });
+          }
+        }
 
-        setFollowers(followersWithDetails);
+        setFollowers(validFollowers);
       } catch (error) {
         console.error('Error fetching followers:', error);
         toast.error('Failed to load followers');

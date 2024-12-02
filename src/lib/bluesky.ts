@@ -36,14 +36,10 @@ export class BlueSkyService {
   async getProfile(handle: string) {
     try {
       this.checkAuth();
+      // Using app.bsky.actor.getProfile
       const profile = await this.agent.getProfile({ actor: handle });
       if (!profile?.data) {
         throw new Error('Failed to fetch profile');
-      }
-
-      // Log the raw profile data to see the exact avatar URL structure
-      if (profile.data.avatar) {
-        console.log('Raw profile avatar URL:', profile.data.avatar);
       }
 
       return profile.data;
@@ -56,7 +52,11 @@ export class BlueSkyService {
   async getRecentFollowers(handle: string, limit = 20) {
     try {
       this.checkAuth();
-      const followers = await this.agent.getFollowers({ actor: handle, limit });
+      // Using app.bsky.graph.getFollowers
+      const followers = await this.agent.getFollowers({
+        actor: handle,
+        limit: limit
+      });
       if (!followers?.data?.followers) {
         throw new Error('Failed to fetch followers');
       }
@@ -70,7 +70,11 @@ export class BlueSkyService {
   async getUserPosts(did: string, limit = 50) {
     try {
       this.checkAuth();
-      const feed = await this.agent.getAuthorFeed({ actor: did, limit });
+      // Using app.bsky.feed.getAuthorFeed
+      const feed = await this.agent.getAuthorFeed({
+        actor: did,
+        limit: limit
+      });
       if (!feed?.data?.feed) {
         throw new Error('Failed to fetch user posts');
       }
@@ -84,12 +88,12 @@ export class BlueSkyService {
   async createPost(text: string) {
     try {
       this.checkAuth();
+      // Using app.bsky.feed.post
       const result = await this.agent.post({
         text,
         createdAt: new Date().toISOString(),
       });
       
-      // If we get here, the post was successful as the method throws on failure
       return true;
     } catch (error) {
       console.error('Error creating post:', error);

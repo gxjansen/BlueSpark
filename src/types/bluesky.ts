@@ -10,6 +10,11 @@ export interface FollowerProfile {
   description?: string;
   avatar?: string;
   posts: Post[];
+  followersCount: number;
+  followsCount: number;
+  postsCount: number;
+  joinedAt: string;
+  lastPostedAt?: string;
 }
 
 export interface Post {
