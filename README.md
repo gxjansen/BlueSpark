@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="public/logo.svg" alt="BlueSpark Logo" width="128" height="128" />
+  <img src="public/logo-white.svg" alt="BlueSpark Logo" width="128" height="128" />
   <h1>BlueSpark</h1>
   <p><strong>AI-powered conversation starter generator for BlueSky followers</strong></p>
 </div>
