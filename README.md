@@ -8,6 +8,7 @@ BlueSpark is a web application designed to enhance engagement on BlueSky by auto
 
 This tool does **NOT** post anything automatically, only when you click the "Post" button. I suggest that even with these generated messages, you still review and personalize them.
 
+Here is an example of a follower, a generated message and customization options:
 ![image](public/bluespark-message.png)
 
 ## Features ✨
@@ -27,6 +28,8 @@ This tool does **NOT** post anything automatically, only when you click the "Pos
   - Direct posting to BlueSky with one click
   - Single message suggestion per user-follower pair
 
+
+Login screen:
 ![image](public/bluespark-login.png)
 
 ## Some neat little features 🎉
