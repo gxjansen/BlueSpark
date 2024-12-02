@@ -1,6 +1,7 @@
 import { StateCreator } from 'zustand';
 import { BlueSkyService } from '../lib/services/bluesky-facade';
 import { AuthService } from '../lib/services/auth';
+import { AnalyticsService } from '../lib/services/analytics';
 import type { BlueSkyCredentials } from '../types/bluesky';
 import { AppBskyFeedDefs, AppBskyFeedPost } from '@atproto/api';
 
@@ -32,6 +33,7 @@ const createAuthSlice: StateCreator<AuthSlice> = (set) => ({
   login: async (identifier: string, password: string) => {
     const auth = AuthService.getInstance();
     const bluesky = BlueSkyService.getInstance();
+    const analytics = AnalyticsService.getInstance();
 
     const session = await auth.login(identifier, password);
     
@@ -43,6 +45,9 @@ const createAuthSlice: StateCreator<AuthSlice> = (set) => ({
     // Load user profile after successful login
     const profile = await bluesky.getProfile(identifier);
     const posts = await bluesky.getUserPosts(profile.did);
+    
+    // Track login
+    await analytics.trackLogin(profile.handle);
     
     set((state: any) => ({
       ...state,
