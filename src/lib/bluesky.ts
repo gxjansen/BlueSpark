@@ -1,6 +1,10 @@
-import { BskyAgent } from '@atproto/api';
+import { BskyAgent, AppBskyFeedDefs, AppBskyFeedPost } from '@atproto/api';
 import { useStore } from './store';
 import toast from 'react-hot-toast';
+
+type FeedViewPost = AppBskyFeedDefs.FeedViewPost;
+type PostView = AppBskyFeedDefs.PostView;
+type PostRecord = AppBskyFeedPost.Record;
 
 // Custom error types
 class RateLimitError extends Error {
@@ -15,6 +19,21 @@ class ServiceUnavailableError extends Error {
     super(message);
     this.name = 'ServiceUnavailableError';
   }
+}
+
+export interface RecentInteraction {
+  hasInteracted: boolean;
+  lastInteractionDate?: string;
+}
+
+interface PostAuthor {
+  did: string;
+}
+
+interface ReplyRef {
+  parent: {
+    author: PostAuthor;
+  };
 }
 
 export class BlueSkyService {
@@ -53,7 +72,6 @@ export class BlueSkyService {
   private handleApiError(error: any, context: string) {
     console.error(`${context} error:`, error);
 
-    // Check for rate limit
     if (error.status === 429) {
       const retryAfter = parseInt(error.headers?.['retry-after'] || '60', 10);
       throw new RateLimitError(
@@ -62,14 +80,12 @@ export class BlueSkyService {
       );
     }
 
-    // Check for service unavailable
     if (error.status === 502 || error.status === 503 || error.status === 504) {
       throw new ServiceUnavailableError(
         'BlueSky service is temporarily unavailable. Please try again in a few moments.'
       );
     }
 
-    // Handle other errors
     throw error;
   }
 
@@ -91,35 +107,30 @@ export class BlueSkyService {
         try {
           this.handleApiError(error, context);
         } catch (handledError) {
-          // Don't retry rate limits
           if (handledError instanceof RateLimitError) {
             toast.error(`Rate limit reached. Please wait ${handledError.retryAfter} seconds.`);
             throw handledError;
           }
 
-          // Don't retry auth errors
           if (error.message?.includes('Not authenticated')) {
             throw error;
           }
 
-          // Don't retry client errors (except rate limits which were handled above)
           if (error.status && error.status >= 400 && error.status < 500) {
             throw error;
           }
 
-          // For service unavailable, show toast and retry
           if (handledError instanceof ServiceUnavailableError) {
-            if (i === 0) { // Only show toast on first retry
+            if (i === 0) {
               toast.error('BlueSky service temporarily unavailable. Retrying...');
             }
             console.log(`Retry attempt ${i + 1} for ${context}...`);
             await new Promise(resolve => setTimeout(resolve, delay));
-            delay *= 2; // Exponential backoff
+            delay *= 2;
             continue;
           }
         }
 
-        // For unhandled errors, retry with backoff
         if (i < maxRetries - 1) {
           await new Promise(resolve => setTimeout(resolve, delay));
           delay *= 2;
@@ -127,9 +138,83 @@ export class BlueSkyService {
       }
     }
 
-    // If we get here, all retries failed
     toast.error('Failed to connect to BlueSky. Please try again later.');
     throw lastError;
+  }
+
+  async checkRecentInteractions(userDid: string, followerDid: string): Promise<RecentInteraction> {
+    try {
+      this.checkAuth();
+      this.trackApiCall();
+
+      // Get posts from the last week
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+      // Get user's recent posts
+      const userPosts = await this.retryOperation(
+        () => this.agent.getAuthorFeed({ actor: userDid }),
+        `Get recent posts for ${userDid}`
+      );
+
+      // Get follower's recent posts
+      const followerPosts = await this.retryOperation(
+        () => this.agent.getAuthorFeed({ actor: followerDid }),
+        `Get recent posts for ${followerDid}`
+      );
+
+      const result: RecentInteraction = { hasInteracted: false };
+
+      // Helper function to check if a post is within the last week
+      const isWithinLastWeek = (post: FeedViewPost) => {
+        const postDate = new Date(post.post.indexedAt);
+        return postDate >= oneWeekAgo;
+      };
+
+      // Helper function to check if a post mentions or replies to a user
+      const checkPostInteraction = (post: FeedViewPost, targetDid: string): boolean => {
+        const record = post.post.record as PostRecord;
+        const reply = post.reply as ReplyRef | undefined;
+        
+        // Check for mentions in post text
+        const hasMention = record?.text?.toLowerCase().includes(targetDid);
+        
+        // Check if it's a reply to the target user
+        const isReply = reply?.parent?.author?.did === targetDid;
+        
+        return Boolean(hasMention || isReply);
+      };
+
+      // Check user's posts for interactions with follower
+      for (const post of userPosts.data.feed) {
+        if (!isWithinLastWeek(post)) continue;
+        
+        if (checkPostInteraction(post, followerDid)) {
+          result.hasInteracted = true;
+          result.lastInteractionDate = post.post.indexedAt;
+          break;
+        }
+      }
+
+      // If no interaction found, check follower's posts
+      if (!result.hasInteracted) {
+        for (const post of followerPosts.data.feed) {
+          if (!isWithinLastWeek(post)) continue;
+          
+          if (checkPostInteraction(post, userDid)) {
+            result.hasInteracted = true;
+            result.lastInteractionDate = post.post.indexedAt;
+            break;
+          }
+        }
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Error checking recent interactions:', error);
+      // Return false but don't throw - this is a non-critical feature
+      return { hasInteracted: false };
+    }
   }
 
   async login(identifier: string, password: string) {

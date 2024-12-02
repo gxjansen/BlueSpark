@@ -1,12 +1,39 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useStore } from '../lib/store';
-import { Users, Loader, UserRound, Calendar, UserPlus2, Users2 } from 'lucide-react';
+import { Users, Loader, UserRound, Calendar, AlertCircle } from 'lucide-react';
 import { MessageGenerator } from './MessageGenerator';
 import { useFollowers } from '../hooks/useFollowers';
+import { BlueSkyService } from '../lib/bluesky';
+import { RecentInteraction } from '../types/bluesky';
 
 export function FollowerList() {
-  const followers = useStore((state) => state.followers);
+  const { followers, userProfile } = useStore((state) => state);
   const { loading } = useFollowers();
+  const [interactions, setInteractions] = useState<Record<string, RecentInteraction>>({});
+
+  useEffect(() => {
+    async function checkInteractions() {
+      if (!userProfile || !followers.length) return;
+
+      const bluesky = BlueSkyService.getInstance();
+      const newInteractions: Record<string, RecentInteraction> = {};
+
+      for (const follower of followers) {
+        try {
+          const interaction = await bluesky.checkRecentInteractions(userProfile.did, follower.did);
+          if (interaction.hasInteracted) {
+            newInteractions[follower.did] = interaction;
+          }
+        } catch (error) {
+          console.warn(`Failed to check interactions for ${follower.handle}:`, error);
+        }
+      }
+
+      setInteractions(newInteractions);
+    }
+
+    checkInteractions();
+  }, [followers, userProfile]);
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'No posts yet';
@@ -75,35 +102,33 @@ export function FollowerList() {
               
               {/* Profile Stats */}
               <div className="flex items-center space-x-4 text-sm text-gray-500">
-                <div className="flex items-center space-x-3">
-                  {/* Followers count */}
-                  <div className="flex items-center group relative">
-                    <Users2 className="w-4 h-4 mr-1" />
-                    <span>{follower.followersCount}</span>
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                      Followers
-                    </div>
-                  </div>
-
-                  {/* Following count */}
-                  <div className="flex items-center group relative">
-                    <UserPlus2 className="w-4 h-4 mr-1" />
-                    <span>{follower.followsCount}</span>
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                      Following
-                    </div>
-                  </div>
-
-                  {/* Posts count */}
-                  <div>
-                    <span>{follower.postsCount} posts</span>
-                  </div>
+                <div className="flex items-center">
+                  <UserRound className="w-4 h-4 mr-1" />
+                  <span>{follower.followersCount}</span>
+                  <span className="mx-1">·</span>
+                  <span>{follower.followsCount}</span>
+                </div>
+                <div>
+                  <span>{follower.postsCount} posts</span>
                 </div>
               </div>
             </div>
 
             {follower.description && (
               <p className="mt-2 text-sm text-gray-600 ml-13">{follower.description}</p>
+            )}
+
+            {/* Recent Interaction Warning */}
+            {interactions[follower.did]?.hasInteracted && (
+              <div className="mt-2 flex items-center text-amber-600 bg-amber-50 p-2 rounded-md">
+                <AlertCircle className="w-4 h-4 mr-2" />
+                <span className="text-sm">
+                  You've interacted with this user in the past week
+                  {interactions[follower.did].lastInteractionDate && 
+                    ` (${formatDate(interactions[follower.did].lastInteractionDate)})`
+                  }
+                </span>
+              </div>
             )}
 
             {/* Dates */}

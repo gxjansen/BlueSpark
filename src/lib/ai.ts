@@ -12,14 +12,18 @@ export class AIService {
     }
   }
 
-  static async generateMessage(userProfile: any, followerProfile: any): Promise<string> {
+  static async generateMessage(
+    userProfile: any, 
+    followerProfile: any, 
+    customPrompt?: string
+  ): Promise<string> {
     // Validate input data
     if (!userProfile || !followerProfile) {
       console.error('Missing profile data:', { userProfile, followerProfile });
       throw new Error('Invalid profile data');
     }
 
-    const prompt = `
+    const prompt = customPrompt || `
       User Profile:
       Name: ${userProfile.displayName || 'Unknown'}
       Bio: ${userProfile.description || 'No bio'}

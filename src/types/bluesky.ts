@@ -15,6 +15,7 @@ export interface FollowerProfile {
   postsCount: number;
   joinedAt: string;
   lastPostedAt?: string;
+  recentInteraction?: RecentInteraction;
 }
 
 export interface Post {
@@ -48,4 +49,45 @@ export interface ProfileAnalysis {
   interests: string[];
   summary: string;
   lastUpdated: string;
+}
+
+export interface RecentInteraction {
+  hasInteracted: boolean;
+  lastInteractionDate?: string;
+}
+
+// BlueSky API Types
+export interface PostRecord {
+  text: string;
+  createdAt: string;
+  facets?: PostFacet[];
+}
+
+export interface PostFacet {
+  index: { start: number; end: number };
+  features: PostFeature[];
+}
+
+export interface PostFeature {
+  $type: string;
+  did?: string;
+}
+
+export interface PostReplyRef {
+  parent: {
+    author: {
+      did: string;
+    };
+  };
+}
+
+export interface FeedViewPost {
+  post: {
+    record: PostRecord;
+    author: {
+      did: string;
+    };
+    indexedAt: string;
+  };
+  reply?: PostReplyRef;
 }
