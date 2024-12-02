@@ -1,4 +1,4 @@
-import { UserRound, Calendar, AlertCircle } from 'lucide-react';
+import { UserRound, Calendar, AlertCircle, Building2, User, ExternalLink } from 'lucide-react';
 import { Card } from './shared/Card';
 import { Badge } from './shared/Badge';
 import { MessageGenerator } from './MessageGenerator';
@@ -45,12 +45,20 @@ export function FollowerCard({ follower, interaction, onSelect }: FollowerCardPr
     return daysSinceJoining <= 14;
   };
 
+  const profileUrl = `https://bsky.app/profile/${follower.handle}`;
+
   return (
-    <Card onClick={onSelect} className="relative">
+    <Card className="relative">
       <div className="flex flex-col gap-4">
         {/* Header with Avatar and Name */}
         <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
+          <a 
+            href={profileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 group hover:opacity-80 transition-opacity"
+            onClick={(e) => e.stopPropagation()}
+          >
             {follower.avatar ? (
               <img
                 src={follower.avatar}
@@ -64,13 +72,23 @@ export function FollowerCard({ follower, interaction, onSelect }: FollowerCardPr
                 </span>
               </div>
             )}
-            <div>
-              <h3 className="font-medium text-gray-100">
-                {follower.displayName || follower.handle}
-              </h3>
-              <p className="text-sm text-gray-400">@{follower.handle}</p>
+            <div className="flex items-center gap-2">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-medium text-gray-100">
+                    {follower.displayName || follower.handle}
+                  </h3>
+                  {follower.accountType === 'organization' ? (
+                    <Building2 className="w-4 h-4 text-gray-400" aria-label="Organization Account" />
+                  ) : (
+                    <User className="w-4 h-4 text-gray-400" aria-label="Personal Account" />
+                  )}
+                </div>
+                <p className="text-sm text-gray-400">@{follower.handle}</p>
+              </div>
+              <ExternalLink className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-          </div>
+          </a>
 
           {/* Stats */}
           <div className="flex items-center gap-4 text-sm text-gray-400">

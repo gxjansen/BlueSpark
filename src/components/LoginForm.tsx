@@ -10,6 +10,7 @@ export function LoginForm() {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,17 +20,18 @@ export function LoginForm() {
     }
 
     setIsLoading(true);
+    setError(null);
+
     try {
-      await login(identifier, password);
+      // Sanitize the identifier by removing any @ symbol from the start
+      const sanitizedIdentifier = identifier.replace(/^@/, '');
+      await login(sanitizedIdentifier, password);
     } catch (error) {
       if (error instanceof RateLimitError) {
-        toast.error(error.message, {
-          duration: 5000, // Show longer for rate limit errors
-          icon: '⏳'
-        });
+        setError(error.message);
       } else {
         const message = error instanceof Error ? error.message : 'Failed to login';
-        toast.error(message);
+        setError(message);
       }
     } finally {
       setIsLoading(false);
@@ -37,55 +39,64 @@ export function LoginForm() {
   };
 
   return (
-    <Card className="bg-[#1a2028] border-[#2a3441]">
-      <div className="w-full max-w-md mx-auto">
-        <div className="flex items-center justify-center mb-10">
-          <img 
-            src="/logo-white.svg" 
-            alt="BlueSpark Logo" 
-            className="w-16 h-16 mr-4"
-          />
-          <h1 className="text-4xl font-bold text-gray-100">BlueSpark</h1>
+    <Card>
+      <div className="w-full max-w-md">
+        <div className="flex flex-col items-center mb-8">
+          <div className="flex items-center mb-4">
+            <img 
+              src="/logo-blue.svg" 
+              alt="BlueSpark Logo" 
+              className="w-12 h-12 mr-4"
+            />
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-bold text-gray-100">BlueSpark</h1>
+              <span className="font-['Caveat'] text-blue-400 -rotate-6 text-2xl">Beta</span>
+            </div>
+          </div>
+          <p className="text-gray-400 text-sm italic text-center">
+            "Starting a conversation can be hard.<br/> So I created BlueSpark to help break the ice!"
+          </p>
         </div>
 
-        <div className="mb-10 space-y-6 text-gray-300">
-          <p className="text-xl text-center font-medium">
-            Welcome to BlueSpark!
+        <div className="mb-8 space-y-4 text-gray-300">
+          <p>
+          Welcome each new follower with a personal icebreaking message. By finding what you have in common, it helps you start discussions that both of you will enjoy – turning simple follows into real connections on BlueSky.
           </p>
-          <p className="text-lg text-center text-gray-400">
-            A tool to help you engage with your new Bluesky followers:
-          </p>
-          <ul className="space-y-4 max-w-sm mx-auto">
-            <li className="flex items-center">
-              <span className="text-2xl mr-4">👋</span>
-              <span className="text-lg">Automatically detect new followers</span>
+          <ul className="space-y-2">
+            <li className="flex items-start">
+              <span className="mr-2">1️⃣</span>
+              <span>Login with your BlueSky credentials and automatically detect new followers.</span>
             </li>
-            <li className="flex items-center">
-              <span className="text-2xl mr-4">💬</span>
-              <span className="text-lg">Generate personalized welcome messages</span>
+            <li className="flex items-start">
+              <span className="mr-2">2️⃣</span>
+              <span>Use AI to scan profiles & latest messages to find common interests and topics.</span>
             </li>
-            <li className="flex items-center">
-              <span className="text-2xl mr-4">🎯</span>
-              <span className="text-lg">Include shared interests in conversations</span>
+            <li className="flex items-start">
+              <span className="mr-2">3️⃣</span>
+              <span>Generate a personalized message, customize it and post it!</span>
             </li>
           </ul>
+          <p>It's that simple!</p><p>And no worries, we <strong>never post anything automatically</strong>, only when you click the "Post" button.</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 bg-[#242c38] p-6 rounded-lg border border-[#2a3441]">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="identifier" className="block text-sm font-medium text-gray-300">
-              Username or Email
+              Username
             </label>
             <input
               id="identifier"
               type="text"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
-              className="mt-2 block w-full px-4 py-3 bg-[#2a3441] border border-[#3b4758] rounded-md text-gray-100 placeholder-gray-400
+              className="mt-1 block w-full px-3 py-2 bg-[#2a3441] border border-[#3b4758] rounded-md text-gray-100 placeholder-gray-400
                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="username.bsky.social"
               disabled={isLoading}
             />
+            <p className="mt-2 text-sm text-gray-400">
+              You can enter your handle with or without "@" (e.g., "username.bsky.social" or "@username.bsky.social")
+            </p>
           </div>
 
           <div>
@@ -97,29 +108,35 @@ export function LoginForm() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-2 block w-full px-4 py-3 bg-[#2a3441] border border-[#3b4758] rounded-md text-gray-100 placeholder-gray-400
+              className="mt-1 block w-full px-3 py-2 bg-[#2a3441] border border-[#3b4758] rounded-md text-gray-100 placeholder-gray-400
                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="xxxx-xxxx-xxxx-xxxx"
               disabled={isLoading}
             />
-            <p className="mt-3 text-sm text-gray-400">
+            <p className="mt-2 text-sm text-gray-400">
               Create an app password at{' '}
               <a
                 href="https://bsky.app/settings/app-passwords"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300 font-medium"
+                className="text-blue-400 hover:text-blue-300"
               >
                 bsky.app/settings/app-passwords
               </a>
             </p>
           </div>
 
+          {error && (
+            <div className="p-3 bg-red-900/50 border border-red-700 rounded-md">
+              <p className="text-red-200 text-sm">{error}</p>
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white
-              bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 mt-8"
+            className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white
+              bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
           >
             {isLoading ? (
               <>

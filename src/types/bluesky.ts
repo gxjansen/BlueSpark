@@ -15,6 +15,7 @@ export interface FollowerProfile {
   postsCount: number;
   joinedAt: string;
   lastPostedAt?: string;
+  accountType?: 'personal' | 'organization';
 }
 
 export interface Post {

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { RefreshCw, Settings, Activity } from 'lucide-react';
+import { RefreshCw, Settings, Activity, ExternalLink } from 'lucide-react';
 import { useStore } from '../lib/store';
 import { ContentAnalyzer } from '../lib/analysis';
 import { WelcomeMessageSettings } from '../types/bluesky';
@@ -74,6 +74,7 @@ export function UserProfile() {
   if (!userProfile) return null;
 
   const remainingChars = 200 - (welcomeSettings.customPrompt?.length || 0);
+  const profileUrl = `https://bsky.app/profile/${userProfile.handle}`;
 
   return (
     <div className="space-y-6">
@@ -89,7 +90,12 @@ export function UserProfile() {
       {/* Profile Analysis */}
       <div className="bg-[#242c38] rounded-lg p-4 border border-[#2a3441]">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
+          <a 
+            href={profileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 group hover:opacity-80 transition-opacity"
+          >
             {userProfile.avatar ? (
               <img
                 src={userProfile.avatar}
@@ -103,11 +109,14 @@ export function UserProfile() {
                 </span>
               </div>
             )}
-            <div>
-              <h2 className="font-medium text-gray-100">{userProfile.displayName}</h2>
-              <p className="text-sm text-gray-400">@{userProfile.handle}</p>
+            <div className="flex items-center gap-2">
+              <div>
+                <h2 className="font-medium text-gray-100">{userProfile.displayName}</h2>
+                <p className="text-sm text-gray-400">@{userProfile.handle}</p>
+              </div>
+              <ExternalLink className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-          </div>
+          </a>
           <button
             onClick={analyzeProfile}
             disabled={isAnalyzing}

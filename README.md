@@ -1,10 +1,14 @@
 <div align="center">
-  <img src="public/logo-white.svg" alt="BlueSpark Logo" width="128" height="128" />
+  <img src="public/logo-blue.svg" alt="BlueSpark Logo" width="128" height="128" />
   <h1>BlueSpark</h1>
   <p><strong>AI-powered conversation starter generator for BlueSky followers</strong></p>
 </div>
 
 BlueSpark is a web application designed to enhance engagement on BlueSky by automatically generating personalized conversation starters for new followers. The app analyzes both user and follower profiles to create meaningful, context-aware welcome messages that spark genuine conversations based on shared interests.
+
+This tool does **NOT** post anything automatically, only when you click the "Post" button. I suggest that even with these generated messages, you still review and personalize them.
+
+![image](public/bluespark-message.png)
 
 ## Features ✨
 
@@ -23,16 +27,22 @@ BlueSpark is a web application designed to enhance engagement on BlueSky by auto
   - Direct posting to BlueSky with one click
   - Single message suggestion per user-follower pair
 
-## Tech Stack 🛠️
+![image](public/bluespark-login.png)
 
-- **Frontend Framework**: React 18 with TypeScript
-- **Styling**: Tailwind CSS
-- **State Management**: Zustand
-- **AI Integration**: OpenRouter API
-- **BlueSky Integration**: @atproto/api
-- **Build Tool**: Vite
-- **UI Components**: Lucide React
-- **Notifications**: React Hot Toast
+## Some neat little features 🎉
+
+- a warning will show if you have @-mentioned this user in the past 2 weeks (or vice versa), to prevent accidentally posting a welcome message to someone you've already interacted with
+  ![image](public/bluespark-warning.png)
+- You can set the tone of voice and even add a custom instruction prompt for further customization
+- You can  regenerate the message if you're not satisfied with it, the tool even provides common topics you can click to regenerate with focus on a specific topic.
+- There is detection for "personal" vs "business" accounts (both on the user and followers side)
+  - accounts are labeled as such (look for the person or building icon after the username)
+  - messages are adjusted accordingly
+  - the default tone of voice for personal accounts is "warm", while for business accounts it's "professional"
+- It shows the amount of BlueSky API calls and AI tokens used
+- New BlueSky users (defined as users with an account age < 14 days) get a "New" badge
+  ![image](public/bluespark-new.png)
+- To save on API calls, the "topics in common" analysis and the message generation only takes place when you click the "Generate welcome message" button
 
 ## Installation 🚀
 

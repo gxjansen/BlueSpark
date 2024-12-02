@@ -118,11 +118,14 @@ export function FollowerList() {
   return (
     <div className="bg-[#242c38] rounded-lg border border-[#2a3441]">
       <div className="p-4 border-b border-[#2a3441]">
-        <div className="flex items-center gap-2">
-          <Users className="w-4 h-4 text-blue-400" />
-          <h2 className="text-sm font-medium text-gray-100">
-            Recent Followers <span className="text-gray-400">({followers.length})</span>
-          </h2>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-blue-400" />
+            <h2 className="text-sm font-medium text-gray-100">
+              Recent Followers <span className="text-gray-400">({followers.length})</span>
+            </h2>
+          </div>
+          <p className="text-xs text-gray-400 ml-6">During beta, only your latest 20 followers are shown</p>
         </div>
       </div>
 

@@ -1,4 +1,5 @@
 import { BskyAgent } from '@atproto/api';
+import { XRPCError } from '@atproto/xrpc';
 import { useStore } from '../store';
 import { retryOperation, AuthenticationError, RateLimitError, isRateLimitError } from '../utils/error-handling';
 import type { BlueSkyCredentials } from '../../types/bluesky';
@@ -44,10 +45,17 @@ export class AuthService {
       return response;
     } catch (error) {
       console.error('Login error:', error);
-      if (isRateLimitError(error)) {
-        throw new RateLimitError();
+      // Check if it's a rate limit error
+      if (error instanceof XRPCError && error.status === 429) {
+        const retryAfter = error.headers?.['retry-after'];
+        const minutes = retryAfter ? Math.ceil(parseInt(retryAfter, 10) / 60) : undefined;
+        const message = minutes
+          ? `Rate limit exceeded. Please wait ${minutes} minutes before trying again.`
+          : 'Rate limit exceeded. Please wait a few minutes before trying again.';
+        throw new RateLimitError(message, minutes ? minutes * 60 : undefined);
       }
-      throw new Error('Failed to login. Please check your credentials.');
+      // Re-throw the original error
+      throw error;
     }
   }
 

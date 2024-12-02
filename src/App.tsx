@@ -75,11 +75,14 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <div className="flex items-center">
             <img 
-              src="/logo-white.svg" 
+              src="/logo-blue.svg" 
               alt="BlueSpark Logo" 
               className="w-8 h-8 mr-3"
             />
-            <h1 className="text-xl font-bold text-gray-100">BlueSpark</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold text-gray-100">BlueSpark</h1>
+              <span className="font-['Caveat'] text-blue-400 -rotate-6 text-lg">Beta</span>
+            </div>
           </div>
           <button
             onClick={() => useStore.getState().logout()}

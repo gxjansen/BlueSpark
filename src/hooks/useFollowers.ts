@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useStore } from '../lib/store';
 import { BlueSkyService } from '../lib/services/bluesky-facade';
+import { ContentAnalyzer } from '../lib/analysis';
 import type { FollowerProfile, Post } from '../types/bluesky';
 import { AppBskyFeedDefs, AppBskyFeedPost, AppBskyActorDefs } from '@atproto/api';
 import toast from 'react-hot-toast';
@@ -73,14 +74,6 @@ export function useFollowers() {
               const profile = (await bluesky.getProfile(follower.handle)) as ProfileViewDetailed;
               const posts = await bluesky.getUserPosts(follower.did);
               
-              // Debug logging for join date
-              const firstPost = posts[0]?.post.record as PostRecord;
-              console.debug('Loading follower data:', {
-                handle: follower.handle,
-                indexedAt: profile.indexedAt,
-                firstPostDate: firstPost?.createdAt
-              });
-
               const followerPosts: Post[] = posts.map((post: FeedViewPost) => {
                 const record = post.post.record as PostRecord;
                 return {
@@ -89,7 +82,8 @@ export function useFollowers() {
                 };
               });
 
-              validFollowers.push({
+              // Create follower profile without account type initially
+              const followerProfile: FollowerProfile = {
                 did: follower.did,
                 handle: follower.handle,
                 displayName: profile.displayName || follower.handle,
@@ -100,8 +94,11 @@ export function useFollowers() {
                 followsCount: profile.followsCount || 0,
                 postsCount: profile.postsCount || 0,
                 joinedAt: profile.indexedAt || new Date().toISOString(),
-                lastPostedAt: getLatestPostDate(posts)
-              });
+                lastPostedAt: getLatestPostDate(posts),
+                accountType: 'personal' // Default to personal initially
+              };
+
+              validFollowers.push(followerProfile);
             } catch (error) {
               console.warn(`Failed to fetch details for follower ${follower.handle}:`, error);
               failedFetches++;
@@ -118,7 +115,8 @@ export function useFollowers() {
                 followsCount: 0,
                 postsCount: 0,
                 joinedAt: new Date().toISOString(),
-                lastPostedAt: undefined
+                lastPostedAt: undefined,
+                accountType: 'personal' // Default to personal
               });
             }
           }
@@ -134,12 +132,41 @@ export function useFollowers() {
           console.warn(`Failed to fetch complete details for ${failedFetches} followers`);
         }
 
-        // Take exactly FOLLOWERS_LIMIT followers
-        setFollowers(validFollowers.slice(0, FOLLOWERS_LIMIT));
+        // Set followers immediately with default account types
+        const initialFollowers = validFollowers.slice(0, FOLLOWERS_LIMIT);
+        setFollowers(initialFollowers);
+        setLoading(false);
+
+        // Then analyze account types in the background
+        initialFollowers.forEach(async (follower, index) => {
+          try {
+            const analysis = await ContentAnalyzer.analyzeUserProfile(follower);
+            
+            // Debug logging for account type
+            console.debug('Follower analysis:', {
+              handle: follower.handle,
+              accountType: analysis.accountType,
+              basedOnPosts: analysis.basedOnPosts
+            });
+
+            // Get current followers from store
+            const currentFollowers = useStore.getState().followers;
+            
+            // Create new array with updated account type
+            const updatedFollowers = currentFollowers.map((f, i) => 
+              i === index ? { ...f, accountType: analysis.accountType } : f
+            );
+
+            // Update store with new array
+            setFollowers(updatedFollowers);
+          } catch (error) {
+            console.warn(`Failed to analyze account type for ${follower.handle}:`, error);
+          }
+        });
+
       } catch (error) {
         console.error('Failed to load followers:', error);
         toast.error('Failed to load followers');
-      } finally {
         setLoading(false);
       }
     }
