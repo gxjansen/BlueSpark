@@ -11,17 +11,16 @@ BlueSpark is a web application designed to enhance engagement on BlueSky by auto
 - **BlueSky Authentication**: Secure login using BlueSky username and application password
 - **Automated Profile Analysis**: 
   - Analyzes user's profile and last 200 posts
-  - Fetches and analyzes the last 20 new followers (configurable)
-  - Processes each follower's profile and last 50 posts (configurable)
+  - Fetches and analyzes the last 20 new followers
+  - Processes each follower's profile and last 50 posts
 - **AI-Powered Message Generation**:
-  - Creates personalized welcome messages using OpenRouter AI
+  - Creates personalized welcome messages using OpenRouter AI / Claude Haiku
   - Focuses on shared interests between user and follower
   - Includes engaging questions to start conversations
 - **Message Management**:
   - Option to regenerate messages if desired
   - Direct posting to BlueSky with one click
   - Single message suggestion per user-follower pair
-- **Netlify Deployment Ready**: Optimized for deployment on Netlify
 
 ## Tech Stack 🛠️
 
@@ -99,4 +98,4 @@ Copy this file to `.env` and replace the placeholder values with your actual cre
 
 ## License 📄
 
-[Add your license information here]
+MIT License
