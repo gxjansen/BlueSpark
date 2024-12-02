@@ -1,16 +1,18 @@
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 import { useStore } from './store';
+import type { ProfileAnalysis } from '../types/bluesky';
 
 const MIN_POSTS_FOR_ANALYSIS = 20;
 
-const DEFAULT_EMPTY_PROFILE_ANALYSIS = {
+const DEFAULT_EMPTY_PROFILE_ANALYSIS: ProfileAnalysis = {
   summary: "This appears to be a new user who hasn't posted content or added profile information yet.",
   mainTopics: ["new to bluesky"],
   writingStyle: "Not enough content to analyze",
   commonThemes: ["getting started"],
   interests: ["exploring bluesky"],
   lastUpdated: new Date().toISOString(),
-  basedOnPosts: false
+  basedOnPosts: false,
+  accountType: 'personal'
 };
 
 export class AIService {
@@ -36,11 +38,13 @@ export class AIService {
     }
 
     const isNewUser = followerProfile.postsCount === 0;
+    const isOrganization = userProfile.accountType === 'organization';
 
     const prompt = customPrompt || `
       User Profile:
       Name: ${userProfile.displayName || 'Unknown'}
       Bio: ${userProfile.description || 'No bio'}
+      Account Type: ${isOrganization ? 'Organization' : 'Personal'}
       Recent posts: ${(userProfile.posts || []).slice(0, 3).map((p: any) => p.text || '').join('\n')}
 
       New Follower Profile:
@@ -54,13 +58,18 @@ export class AIService {
       IMPORTANT REQUIREMENTS:
       1. First sentence MUST include "@${followerProfile.handle}" and indicate this is a first meeting/introduction
       2. Message MUST end with a relevant question about a shared interest to start a conversation
-      3. Keep it casual and authentic
+      3. Keep it ${isOrganization ? 'professional yet approachable' : 'casual and authentic'}
       4. Message must be under 300 characters
       5. Use one of these formats for the first sentence:
          ${isNewUser ? 
            `- "Hello @${followerProfile.handle}, welcome to Bluesky!"
             - "Hi @${followerProfile.handle}! Welcome to the community!"
             - "Hey @${followerProfile.handle}, excited to be one of your first connections on Bluesky!"` 
+           :
+           isOrganization ?
+           `- "Hi @${followerProfile.handle}, thanks for following us!"
+            - "Hello @${followerProfile.handle}! We're glad to connect!"
+            - "Welcome @${followerProfile.handle}! Thanks for joining our community!"` 
            :
            `- "Hi @${followerProfile.handle}, thanks for following me!"
             - "Hey @${followerProfile.handle}, nice meeting you!"
@@ -71,6 +80,7 @@ export class AIService {
          - Shows genuine interest in their perspective
          - Is open-ended to encourage discussion
          - Example: "I see you're also into [shared interest]. What's your take on [specific aspect]?"
+         ${isOrganization ? '- Use "we" instead of "I" in questions' : ''}
 
       DO NOT include any introductory text like "Here's a message:" or explanatory text.
       ONLY generate the welcome message itself.
@@ -139,7 +149,7 @@ export class AIService {
     }
   }
 
-  static async analyzeProfile(userProfile: any): Promise<any> {
+  static async analyzeProfile(userProfile: any): Promise<ProfileAnalysis> {
     if (!userProfile) {
       throw new Error('Invalid profile data');
     }
@@ -153,7 +163,7 @@ export class AIService {
     const hasSufficientPosts = (userProfile.posts || []).length >= MIN_POSTS_FOR_ANALYSIS;
 
     const prompt = `
-      Analyze the following user profile${hasSufficientPosts ? ' and their posts' : ''}. Provide a comprehensive analysis directly addressing the user, including:
+      Analyze the following user profile${hasSufficientPosts ? ' and their posts' : ''}. First, determine if this is a personal account or an organization account. Then provide a comprehensive analysis directly addressing the user/organization, including:
       1. A brief summary of their online presence${hasSufficientPosts ? ' and communication style' : ''}
       2. Main topics they discuss
       3. ${hasSufficientPosts ? 'Writing style characteristics' : 'Apparent interests based on their bio'}
@@ -165,14 +175,22 @@ export class AIService {
       Bio: ${userProfile.description || 'No bio'}
       ${hasSufficientPosts ? `Recent posts: ${userProfile.posts.map((p: any) => p.text || '').join('\n')}` : ''}
 
-      Format the response as JSON with the following structure, using direct address (e.g., "You appear to be..." instead of "The user appears to be..."):
+      Format the response as JSON with the following structure:
       {
-        "summary": "Brief overview directly addressing the user",
+        "accountType": "personal" or "organization",
+        "summary": "Brief overview directly addressing the user/organization",
         "mainTopics": ["topic1", "topic2", "topic3"],
         "writingStyle": "${hasSufficientPosts ? 'Description of their writing style' : 'Not enough posts to analyze'}",
         "commonThemes": ["theme1", "theme2", "theme3"],
         "interests": ["interest1", "interest2", "interest3"]
       }
+
+      Consider these factors when determining if it's an organization:
+      - Use of "we", "our", "us" in bio or posts
+      - Company/brand-like name or description
+      - Professional/corporate tone in communication
+      - References to products, services, or company activities
+      - Official company/brand identifiers
 
       IMPORTANT: Response MUST be valid JSON. Do not include any explanatory text outside the JSON structure.
       ${!hasSufficientPosts ? 'Note: This analysis is based primarily on the user\'s profile bio as they have fewer than ' + MIN_POSTS_FOR_ANALYSIS + ' posts.' : ''}
@@ -219,6 +237,13 @@ export class AIService {
         }
         
         const analysis = JSON.parse(content);
+
+        // If account type is detected as organization, update welcome message settings
+        if (analysis.accountType === 'organization') {
+          const store = useStore.getState();
+          store.updateWelcomeSettings({ toneOfVoice: 'professional' });
+        }
+
         return {
           ...analysis,
           lastUpdated: new Date().toISOString(),
@@ -228,13 +253,10 @@ export class AIService {
         console.error('Failed to parse analysis response:', parseError);
         // Return a default analysis structure
         return {
+          ...DEFAULT_EMPTY_PROFILE_ANALYSIS,
           summary: "Unable to analyze profile at this time.",
           mainTopics: [],
-          writingStyle: "Not enough posts to analyze",
-          commonThemes: [],
           interests: [],
-          lastUpdated: new Date().toISOString(),
-          basedOnPosts: false
         };
       }
     } catch (error) {

@@ -5,6 +5,7 @@ import { AnalyticsService } from '../lib/services/analytics';
 import type { BlueSkyCredentials } from '../types/bluesky';
 import { AppBskyFeedDefs, AppBskyFeedPost } from '@atproto/api';
 import { sessionStats } from '../lib/sessionStats';
+import type { StoreState } from '../lib/store';
 
 type FeedViewPost = AppBskyFeedDefs.FeedViewPost;
 type PostRecord = AppBskyFeedPost.Record;
@@ -69,7 +70,7 @@ export interface AuthActions {
 
 export interface AuthSlice extends AuthState, AuthActions {}
 
-const createAuthSlice: StateCreator<AuthSlice> = (set, get, store: any) => ({
+const createAuthSlice: StateCreator<StoreState, [], [], AuthSlice> = (set, get) => ({
   // Initial state - load credentials from localStorage
   isAuthenticated: false,
   isAutoLogging: false,
@@ -84,7 +85,7 @@ const createAuthSlice: StateCreator<AuthSlice> = (set, get, store: any) => ({
     // If logging in as a different user, reset stats
     if (currentCredentials && currentCredentials.identifier !== identifier) {
       sessionStats.clear();
-      store.resetApiStats?.();
+      get().resetApiStats();
     }
 
     const session = await auth.login(identifier, password);
@@ -99,7 +100,7 @@ const createAuthSlice: StateCreator<AuthSlice> = (set, get, store: any) => ({
 
     // Load and set user profile
     const userProfile = await loadUserProfile(identifier);
-    set((state: any) => ({
+    set((state) => ({
       ...state,
       userProfile
     }));
@@ -117,7 +118,7 @@ const createAuthSlice: StateCreator<AuthSlice> = (set, get, store: any) => ({
       credentials: null
     });
     // Reset API stats
-    store.resetApiStats?.();
+    get().resetApiStats();
   },
 
   setCredentials: async (credentials) => {
@@ -126,7 +127,7 @@ const createAuthSlice: StateCreator<AuthSlice> = (set, get, store: any) => ({
     // If setting credentials for a different user, reset stats
     if (currentCredentials && credentials && currentCredentials.identifier !== credentials.identifier) {
       sessionStats.clear();
-      store.resetApiStats?.();
+      get().resetApiStats();
     }
 
     // Update stored credentials and state
@@ -140,7 +141,7 @@ const createAuthSlice: StateCreator<AuthSlice> = (set, get, store: any) => ({
     if (credentials) {
       try {
         const userProfile = await loadUserProfile(credentials.identifier);
-        set((state: any) => ({
+        set((state) => ({
           ...state,
           userProfile
         }));
@@ -153,7 +154,7 @@ const createAuthSlice: StateCreator<AuthSlice> = (set, get, store: any) => ({
           isAuthenticated: false,
           credentials: null
         });
-        store.resetApiStats?.();
+        get().resetApiStats();
       }
     }
   },

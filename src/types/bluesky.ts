@@ -6,8 +6,8 @@ export interface BlueSkyCredentials {
 export interface FollowerProfile {
   did: string;
   handle: string;
-  displayName?: string;
-  description?: string;
+  displayName: string;
+  description: string;
   avatar?: string;
   posts: Post[];
   followersCount: number;
@@ -15,7 +15,6 @@ export interface FollowerProfile {
   postsCount: number;
   joinedAt: string;
   lastPostedAt?: string;
-  recentInteraction?: RecentInteraction;
 }
 
 export interface Post {
@@ -23,70 +22,32 @@ export interface Post {
   createdAt: string;
 }
 
-export interface ConversationStarter {
-  followerHandle: string;
-  suggestedPost: string;
-  commonInterests: string[];
-}
-
-export interface MessageState {
-  [key: string]: {
-    message: string;
-    isGenerating: boolean;
-    error: string | null;
-  };
-}
-
-export interface WelcomeMessageSettings {
-  toneOfVoice: 'warm' | 'professional' | 'humorous' | 'enthusiastic';
-  customPrompt: string;
+export interface UserProfile extends FollowerProfile {
+  accountType: 'personal' | 'organization';
 }
 
 export interface ProfileAnalysis {
+  summary: string;
   mainTopics: string[];
   writingStyle: string;
   commonThemes: string[];
   interests: string[];
-  summary: string;
   lastUpdated: string;
+  basedOnPosts: boolean;
+  accountType: 'personal' | 'organization';
 }
 
-export interface RecentInteraction {
-  hasInteracted: boolean;
-  lastInteractionDate?: string;
-}
-
-// BlueSky API Types
-export interface PostAuthor {
-  did: string;
-}
-
-export interface ThreadPost {
-  author: PostAuthor;
-}
-
-export interface ThreadView {
-  posts?: ThreadPost[];
-}
-
-export interface PostReplyRef {
-  parent: {
-    author: PostAuthor;
+export interface MessageState {
+  [followerHandle: string]: {
+    message?: string;
+    isGenerating?: boolean;
+    error?: string | null;
   };
 }
 
-export interface PostRecord {
-  text: string;
-  createdAt: string;
-  facets?: PostFacet[];
-}
+export type ToneOfVoice = 'warm' | 'professional' | 'humorous' | 'enthusiastic';
 
-export interface PostFacet {
-  index: { start: number; end: number };
-  features: PostFeature[];
-}
-
-export interface PostFeature {
-  $type: string;
-  did?: string;
+export interface WelcomeMessageSettings {
+  toneOfVoice: ToneOfVoice;
+  customPrompt: string;
 }

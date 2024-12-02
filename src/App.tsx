@@ -69,69 +69,41 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1a2028] flex flex-col">
-      <div className="flex-grow p-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center">
-              <img 
-                src="/logo-white.svg" 
-                alt="BlueSpark Logo" 
-                className="w-10 h-10 mr-3"
-              />
-              <h1 className="text-2xl font-bold text-gray-100">BlueSpark</h1>
-            </div>
-            <button
-              onClick={() => useStore.getState().logout()}
-              className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-gray-100"
-            >
-              Log out
-            </button>
+    <div className="min-h-screen bg-[#1a2028]">
+      {/* Header */}
+      <header className="bg-[#242c38] border-b border-[#2a3441] py-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+          <div className="flex items-center">
+            <img 
+              src="/logo-white.svg" 
+              alt="BlueSpark Logo" 
+              className="w-8 h-8 mr-3"
+            />
+            <h1 className="text-xl font-bold text-gray-100">BlueSpark</h1>
           </div>
-          
-          <div className="flex gap-6">
-            {/* Left Column - User Profile & Settings */}
-            <div className="flex-none">
-              <UserProfile />
-            </div>
+          <button
+            onClick={() => useStore.getState().logout()}
+            className="px-3 py-1.5 text-sm font-medium text-gray-300 hover:text-gray-100 bg-[#2a3441] rounded-md"
+          >
+            Log out
+          </button>
+        </div>
+      </header>
 
-            {/* Right Column - Follower List */}
-            <div className="flex-1">
-              <FollowerList />
-            </div>
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left Sidebar */}
+          <div className="w-full lg:w-80 space-y-6">
+            <UserProfile />
+          </div>
+
+          {/* Main Content Area */}
+          <div className="flex-1">
+            <FollowerList />
           </div>
         </div>
       </div>
-
-      <footer className="p-4 text-center text-sm text-gray-400">
-        Made by{' '}
-        <a 
-          href="https://bsky.app/profile/gui.do" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="text-blue-400 hover:text-blue-300"
-        >
-          Guido X Jansen
-        </a>
-        {' | '}
-        <a 
-          href="https://www.gui.do/" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="text-blue-400 hover:text-blue-300"
-        >
-          gui.do
-        </a>
-        {' | '}
-        <a 
-          href="https://github.com/gxjansen/BlueSpark/issues" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="text-blue-400 hover:text-blue-300"
-        >
-          Feedback & Issues
-        </a>
-      </footer>
     </div>
   );
 }

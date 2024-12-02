@@ -8,25 +8,86 @@ export class AuthenticationError extends Error {
 }
 
 export class RateLimitError extends Error {
-  constructor(message = 'Too many login attempts. Please wait a few minutes and try again.') {
+  public retryAfter?: number;
+
+  constructor(message = 'Too many requests. Please wait a few minutes and try again.', retryAfter?: number) {
     super(message);
     this.name = 'RateLimitError';
+    this.retryAfter = retryAfter;
   }
 }
 
+type HeadersLike = Headers | Record<string, any>;
+
 /**
- * Checks if an error is a rate limit error
+ * Parse rate limit information from response headers
+ */
+export function parseRateLimitHeaders(headers: HeadersLike): {
+  limit: number;
+  remaining: number;
+  reset: number;
+} | null {
+  try {
+    // Handle both Headers object and plain header object
+    const getValue = (key: string): string | null => {
+      if (headers instanceof Headers) {
+        return headers.get(key);
+      }
+      return headers[key]?.toString() || null;
+    };
+
+    const limitStr = getValue('ratelimit-limit');
+    const remainingStr = getValue('ratelimit-remaining');
+    const resetStr = getValue('ratelimit-reset');
+
+    if (!limitStr || !remainingStr || !resetStr) {
+      return null;
+    }
+
+    const limit = parseInt(limitStr, 10);
+    const remaining = parseInt(remainingStr, 10);
+    const reset = parseInt(resetStr, 10);
+
+    if (!isNaN(limit) && !isNaN(remaining) && !isNaN(reset)) {
+      return { limit, remaining, reset };
+    }
+  } catch (error) {
+    console.debug('No rate limit headers found');
+  }
+
+  return null;
+}
+
+/**
+ * Checks if an error is a rate limit error and extracts retry-after if available
  */
 export function isRateLimitError(error: unknown): boolean {
-  return error instanceof XRPCError && error.status === 429;
+  if (error instanceof XRPCError && error.status === 429) {
+    // Try to get retry-after header if available
+    const retryAfter = error.headers && typeof error.headers === 'object' 
+      ? (error.headers as Record<string, string>)['retry-after']
+      : undefined;
+
+    if (retryAfter) {
+      const seconds = parseInt(retryAfter, 10);
+      if (!isNaN(seconds)) {
+        throw new RateLimitError(
+          `Rate limit exceeded. Please wait ${Math.ceil(seconds / 60)} minutes before trying again.`,
+          seconds
+        );
+      }
+    }
+    return true;
+  }
+  return false;
 }
 
 /**
  * Gets a user-friendly error message
  */
 export function getErrorMessage(error: unknown): string {
-  if (isRateLimitError(error)) {
-    return new RateLimitError().message;
+  if (error instanceof RateLimitError) {
+    return error.message;
   }
   if (error instanceof AuthenticationError) {
     return error.message;
@@ -47,7 +108,23 @@ export async function retryOperation<T>(
   
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      return await operation();
+      const result = await operation();
+      
+      // Check rate limit headers on successful response
+      if (result && typeof result === 'object' && 'headers' in result) {
+        const headers = result.headers;
+        if (headers && (headers instanceof Headers || typeof headers === 'object')) {
+          const rateLimits = parseRateLimitHeaders(headers);
+          if (rateLimits && rateLimits.remaining === 0) {
+            throw new RateLimitError(
+              `Rate limit reached. Please wait ${Math.ceil(rateLimits.reset / 60)} minutes before trying again.`,
+              rateLimits.reset
+            );
+          }
+        }
+      }
+      
+      return result;
     } catch (error) {
       lastError = error as Error;
       console.warn(
@@ -56,8 +133,8 @@ export async function retryOperation<T>(
       );
       
       // Don't retry rate limit or authentication errors
-      if (isRateLimitError(error)) {
-        throw new RateLimitError();
+      if (error instanceof RateLimitError) {
+        throw error;
       }
       if (error instanceof AuthenticationError) {
         throw error;
