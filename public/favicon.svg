@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="32" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Simple Hi Text -->
+  <text x="256" y="256" 
+        font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+        font-size="200px"
+        font-weight="700"
+        text-anchor="middle"
+        alignment-baseline="central"
+        fill="#3B82F6">Hi</text>
+</svg>

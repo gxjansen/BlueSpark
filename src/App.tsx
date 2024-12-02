@@ -18,7 +18,14 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">BlueSpark</h1>
+        <div className="flex items-center mb-6">
+          <img 
+            src="/logo.svg" 
+            alt="BlueSpark Logo" 
+            className="w-10 h-10 mr-3"
+          />
+          <h1 className="text-2xl font-bold text-gray-900">BlueSpark</h1>
+        </div>
         
         <div className="flex gap-6">
           {/* Left Column - User Profile & Settings */}

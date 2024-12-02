@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Message Bubble -->
+  <path d="M386 156C386 137.775 371.225 123 353 123H159C140.775 123 126 137.775 126 156V302C126 320.225 140.775 335 159 335H303L366 398V335H353C371.225 335 386 320.225 386 302V156Z" 
+        fill="white"
+        stroke="#3B82F6"
+        stroke-width="24"
+        stroke-linejoin="round"/>
+  
+  <!-- Hello Text -->
+  <text x="256" y="240" 
+        font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+        font-size="80px"
+        font-weight="600"
+        text-anchor="middle"
+        dominant-baseline="middle"
+        fill="#3B82F6">Hello</text>
+  
+  <!-- Sparkles -->
+  <g transform="translate(256, 256) scale(1.2)">
+    <!-- Center Star -->
+    <path d="M0 -60L15 -15L60 0L15 15L0 60L-15 15L-60 0L-15 -15Z" 
+          fill="#60A5FA"
+          transform="translate(120, -80)"/>
+    
+    <!-- Small Stars -->
+    <g transform="translate(-140, -60) scale(0.6)">
+      <path d="M0 -60L15 -15L60 0L15 15L0 60L-15 15L-60 0L-15 -15Z" 
+            fill="#93C5FD"/>
+    </g>
+    <g transform="translate(60, -140) scale(0.5)">
+      <path d="M0 -60L15 -15L60 0L15 15L0 60L-15 15L-60 0L-15 -15Z" 
+            fill="#3B82F6"/>
+    </g>
+    <g transform="translate(-100, 100) scale(0.7)">
+      <path d="M0 -60L15 -15L60 0L15 15L0 60L-15 15L-60 0L-15 -15Z" 
+            fill="#2563EB"/>
+    </g>
+  </g>
+</svg>

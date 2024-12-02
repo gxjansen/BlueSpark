@@ -1,4 +1,8 @@
-# BlueSpark 🌟
+<div align="center">
+  <img src="public/logo.svg" alt="BlueSpark Logo" width="128" height="128" />
+  <h1>BlueSpark</h1>
+  <p><strong>AI-powered conversation starter generator for BlueSky followers</strong></p>
+</div>
 
 BlueSpark is a web application designed to enhance engagement on BlueSky by automatically generating personalized conversation starters for new followers. The app analyzes both user and follower profiles to create meaningful, context-aware welcome messages that spark genuine conversations based on shared interests.
 

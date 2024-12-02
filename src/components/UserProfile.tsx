@@ -48,30 +48,30 @@ export function UserProfile() {
   }
 
   return (
-    <div className="w-80 bg-white rounded-lg shadow-sm p-4 space-y-6">
-      {/* User Profile Header */}
-      <div className="flex items-center space-x-3">
-        {userProfile.avatar ? (
-          <img
-            src={userProfile.avatar}
-            alt={userProfile.displayName || userProfile.handle}
-            className="w-12 h-12 rounded-full"
-          />
-        ) : (
-          <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-            <span className="text-blue-600 text-lg">
-              {(userProfile.displayName || userProfile.handle)[0].toUpperCase()}
-            </span>
+    <div className="w-80 space-y-4">
+      {/* User Profile Box */}
+      <div className="bg-white rounded-lg shadow-sm p-4 space-y-6">
+        {/* User Profile Header */}
+        <div className="flex items-center space-x-3">
+          {userProfile.avatar ? (
+            <img
+              src={userProfile.avatar}
+              alt={userProfile.displayName || userProfile.handle}
+              className="w-12 h-12 rounded-full"
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+              <span className="text-blue-600 text-lg">
+                {(userProfile.displayName || userProfile.handle)[0].toUpperCase()}
+              </span>
+            </div>
+          )}
+          <div>
+            <h2 className="font-semibold">{userProfile.displayName}</h2>
+            <p className="text-sm text-gray-600">@{userProfile.handle}</p>
           </div>
-        )}
-        <div>
-          <h2 className="font-semibold">{userProfile.displayName}</h2>
-          <p className="text-sm text-gray-600">@{userProfile.handle}</p>
         </div>
-      </div>
 
-      {/* Profile Analysis */}
-      <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-gray-700">Profile Analysis</h3>
           <button
