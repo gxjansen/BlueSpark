@@ -1,32 +1,28 @@
-const COOKIE_NAME = 'bluespark_credentials';
+import Cookies from 'js-cookie';
+import type { BlueSkyCredentials } from '../types/bluesky';
 
-export const cookies = {
-  set: (credentials: { identifier: string; password: string }) => {
-    // Encode credentials to base64 for basic security
-    const encoded = btoa(JSON.stringify(credentials));
-    // Set cookie to expire in 30 days
-    const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString();
-    document.cookie = `${COOKIE_NAME}=${encoded}; expires=${expires}; path=/; SameSite=Strict`;
-  },
+const CREDENTIALS_COOKIE = 'bluespark_credentials';
 
-  get: (): { identifier: string; password: string } | null => {
-    const cookies = document.cookie.split(';');
-    const credentialsCookie = cookies.find(cookie => 
-      cookie.trim().startsWith(`${COOKIE_NAME}=`)
-    );
+export function saveCredentials(credentials: BlueSkyCredentials) {
+  Cookies.set(CREDENTIALS_COOKIE, JSON.stringify(credentials), {
+    expires: 30, // 30 days
+    secure: true,
+    sameSite: 'strict'
+  });
+}
 
-    if (!credentialsCookie) return null;
+export function getCredentials(): BlueSkyCredentials | null {
+  const cookie = Cookies.get(CREDENTIALS_COOKIE);
+  if (!cookie) return null;
 
-    try {
-      const encoded = credentialsCookie.split('=')[1].trim();
-      return JSON.parse(atob(encoded));
-    } catch (error) {
-      console.error('Error parsing credentials cookie:', error);
-      return null;
-    }
-  },
-
-  remove: () => {
-    document.cookie = `${COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+  try {
+    return JSON.parse(cookie);
+  } catch (error) {
+    console.error('Failed to parse credentials cookie:', error);
+    return null;
   }
-};
+}
+
+export function clearCredentials() {
+  Cookies.remove(CREDENTIALS_COOKIE);
+}

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useStore } from './lib/store';
+import { useAuth } from './hooks/useAuth';
 import { LoginForm } from './components/LoginForm';
 import { FollowerList } from './components/FollowerList';
 import { UserProfile } from './components/UserProfile';
@@ -7,6 +8,14 @@ import { Loader } from 'lucide-react';
 
 export default function App() {
   const { isAuthenticated, isAutoLogging } = useStore();
+  const { autoLogin, credentials } = useAuth();
+
+  // Attempt auto-login on mount if we have stored credentials
+  useEffect(() => {
+    if (credentials) {
+      autoLogin(credentials);
+    }
+  }, [autoLogin, credentials]);
 
   // Show loading state during auto-login
   if (isAutoLogging) {

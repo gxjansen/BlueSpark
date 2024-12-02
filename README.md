@@ -13,6 +13,7 @@ BlueSpark is a web application designed to enhance engagement on BlueSky by auto
   - Analyzes user's profile and last 200 posts
   - Fetches and analyzes the last 20 new followers
   - Processes each follower's profile and last 50 posts
+  - Recent Interaction Detection, to prevent posting intro messages to users you've already interacted with
 - **AI-Powered Message Generation**:
   - Creates personalized welcome messages using OpenRouter AI / Claude Haiku
   - Focuses on shared interests between user and follower

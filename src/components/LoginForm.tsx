@@ -3,6 +3,7 @@ import { useStore } from '../lib/store';
 import { Card } from './shared/Card';
 import { Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { RateLimitError } from '../lib/utils/error-handling';
 
 export function LoginForm() {
   const login = useStore((state) => state.login);
@@ -21,8 +22,15 @@ export function LoginForm() {
     try {
       await login(identifier, password);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to login';
-      toast.error(message);
+      if (error instanceof RateLimitError) {
+        toast.error(error.message, {
+          duration: 5000, // Show longer for rate limit errors
+          icon: '⏳'
+        });
+      } else {
+        const message = error instanceof Error ? error.message : 'Failed to login';
+        toast.error(message);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -42,7 +50,7 @@ export function LoginForm() {
 
         <div className="mb-8 space-y-4 text-gray-300">
           <p>
-            Easily engage with new Bluesky followers by sending them personalized welcome messages.
+            Welcome to BlueSpark! A tool to help you engage with your new Bluesky followers:
           </p>
           <ul className="space-y-2">
             <li className="flex items-start">

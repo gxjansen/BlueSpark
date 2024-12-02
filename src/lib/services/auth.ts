@@ -1,6 +1,6 @@
 import { BskyAgent } from '@atproto/api';
 import { useStore } from '../store';
-import { retryOperation, AuthenticationError } from '../utils/error-handling';
+import { retryOperation, AuthenticationError, RateLimitError, isRateLimitError } from '../utils/error-handling';
 import type { BlueSkyCredentials } from '../../types/bluesky';
 
 export class AuthService {
@@ -39,13 +39,15 @@ export class AuthService {
   async login(identifier: string, password: string) {
     try {
       this.trackApiCall();
-      // Only try once for login to prevent rate limiting
-      const session = await this.agent.login({ identifier, password });
-      return session;
+      // Don't retry on login to prevent rate limiting
+      const response = await this.agent.login({ identifier, password });
+      return response;
     } catch (error) {
       console.error('Login error:', error);
-      // Let error-handling.ts handle the error message
-      throw error;
+      if (isRateLimitError(error)) {
+        throw new RateLimitError();
+      }
+      throw new Error('Failed to login. Please check your credentials.');
     }
   }
 

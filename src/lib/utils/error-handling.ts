@@ -7,19 +7,29 @@ export class AuthenticationError extends Error {
   }
 }
 
+export class RateLimitError extends Error {
+  constructor(message = 'Too many login attempts. Please wait a few minutes and try again.') {
+    super(message);
+    this.name = 'RateLimitError';
+  }
+}
+
 /**
  * Checks if an error is a rate limit error
  */
-function isRateLimitError(error: unknown): boolean {
+export function isRateLimitError(error: unknown): boolean {
   return error instanceof XRPCError && error.status === 429;
 }
 
 /**
  * Gets a user-friendly error message
  */
-function getErrorMessage(error: unknown): string {
+export function getErrorMessage(error: unknown): string {
   if (isRateLimitError(error)) {
-    return 'Too many login attempts. Please wait a moment and try again.';
+    return new RateLimitError().message;
+  }
+  if (error instanceof AuthenticationError) {
+    return error.message;
   }
   return error instanceof Error ? error.message : 'An unknown error occurred';
 }
@@ -46,8 +56,11 @@ export async function retryOperation<T>(
       );
       
       // Don't retry rate limit or authentication errors
-      if (isRateLimitError(error) || error instanceof AuthenticationError) {
-        throw new Error(getErrorMessage(error));
+      if (isRateLimitError(error)) {
+        throw new RateLimitError();
+      }
+      if (error instanceof AuthenticationError) {
+        throw error;
       }
       
       if (attempt < maxRetries - 1) {
