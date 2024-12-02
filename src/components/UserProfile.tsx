@@ -1,9 +1,59 @@
- import React, { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { useStore } from '../lib/store';
 import { ContentAnalyzer } from '../lib/analysis';
 import { WelcomeMessageSettings } from '../types/bluesky';
 import { ApiStats } from './ApiStats';
+
+// Function to sanitize user input
+const sanitizeInput = (input: string): string => {
+  // Remove any HTML tags
+  const noHtml = input.replace(/<[^>]*>/g, '');
+  
+  // Remove any script-like content
+  const noScript = noHtml.replace(/javascript:/gi, '')
+                        .replace(/data:/gi, '')
+                        .replace(/vbscript:/gi, '')
+                        .replace(/onclick/gi, '')
+                        .replace(/onerror/gi, '')
+                        .replace(/onload/gi, '');
+  
+  // Remove special characters that could be used maliciously
+  const clean = noScript.replace(/[<>{}]/g, '')
+                       .replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
+  
+  // Limit to 200 characters
+  return clean.slice(0, 200);
+};
+
+interface ToneOption {
+  value: WelcomeMessageSettings['toneOfVoice'];
+  label: string;
+  description: string;
+}
+
+const toneOptions: ToneOption[] = [
+  {
+    value: 'warm',
+    label: 'Warm',
+    description: 'Welcoming and sincere'
+  },
+  {
+    value: 'professional',
+    label: 'Professional',
+    description: 'Polite and business-like'
+  },
+  {
+    value: 'humorous',
+    label: 'Humorous',
+    description: 'Light-hearted and fun'
+  },
+  {
+    value: 'enthusiastic',
+    label: 'Enthusiastic',
+    description: 'Energetic and excited'
+  }
+];
 
 export function UserProfile() {
   const {
@@ -41,12 +91,15 @@ export function UserProfile() {
   };
 
   const handleCustomPromptChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    updateWelcomeSettings({ customPrompt: event.target.value });
+    const sanitized = sanitizeInput(event.target.value);
+    updateWelcomeSettings({ customPrompt: sanitized });
   };
 
   if (!userProfile) {
     return null;
   }
+
+  const remainingChars = 200 - (welcomeSettings.customPrompt?.length || 0);
 
   return (
     <div className="w-80 space-y-4">
@@ -123,17 +176,20 @@ export function UserProfile() {
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Tone of Voice</label>
             <div className="grid grid-cols-2 gap-2">
-              {(['friendly', 'professional', 'casual', 'enthusiastic'] as const).map((tone) => (
+              {toneOptions.map((tone) => (
                 <button
-                  key={tone}
-                  onClick={() => handleToneChange(tone)}
-                  className={`px-3 py-2 text-sm rounded-md capitalize ${
-                    welcomeSettings.toneOfVoice === tone
+                  key={tone.value}
+                  onClick={() => handleToneChange(tone.value)}
+                  className={`group relative px-3 py-2 text-sm rounded-md capitalize ${
+                    welcomeSettings.toneOfVoice === tone.value
                       ? 'bg-blue-100 text-blue-700'
                       : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
                   }`}
                 >
-                  {tone}
+                  {tone.label}
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                    {tone.description}
+                  </div>
                 </button>
               ))}
             </div>
@@ -147,9 +203,13 @@ export function UserProfile() {
               id="customPrompt"
               value={welcomeSettings.customPrompt}
               onChange={handleCustomPromptChange}
+              maxLength={200}
               placeholder="Add any specific instructions for generating welcome messages..."
               className="w-full h-24 px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
+            <p className="text-xs text-gray-500 text-right">
+              {remainingChars} characters remaining
+            </p>
           </div>
         </div>
       </div>

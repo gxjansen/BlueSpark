@@ -38,7 +38,7 @@ export interface MessageState {
 }
 
 export interface WelcomeMessageSettings {
-  toneOfVoice: 'friendly' | 'professional' | 'casual' | 'enthusiastic';
+  toneOfVoice: 'warm' | 'professional' | 'humorous' | 'enthusiastic';
   customPrompt: string;
 }
 
@@ -54,40 +54,4 @@ export interface ProfileAnalysis {
 export interface RecentInteraction {
   hasInteracted: boolean;
   lastInteractionDate?: string;
-}
-
-// BlueSky API Types
-export interface PostRecord {
-  text: string;
-  createdAt: string;
-  facets?: PostFacet[];
-}
-
-export interface PostFacet {
-  index: { start: number; end: number };
-  features: PostFeature[];
-}
-
-export interface PostFeature {
-  $type: string;
-  did?: string;
-}
-
-export interface PostReplyRef {
-  parent: {
-    author: {
-      did: string;
-    };
-  };
-}
-
-export interface FeedViewPost {
-  post: {
-    record: PostRecord;
-    author: {
-      did: string;
-    };
-    indexedAt: string;
-  };
-  reply?: PostReplyRef;
 }

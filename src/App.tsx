@@ -42,10 +42,10 @@ function App() {
   // Show loading state during auto-login
   if (isAutoLogging) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#111111] flex items-center justify-center">
         <div className="text-center">
-          <Loader className="w-8 h-8 text-blue-500 animate-spin mx-auto" />
-          <p className="mt-4 text-gray-600">Resuming session...</p>
+          <Loader className="w-8 h-8 text-blue-400 animate-spin mx-auto" />
+          <p className="mt-4 text-gray-400">Resuming session...</p>
         </div>
       </div>
     );
@@ -53,7 +53,7 @@ function App() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-[#111111] flex flex-col">
         <div className="flex-grow flex items-center justify-center p-4">
           <LoginForm />
         </div>

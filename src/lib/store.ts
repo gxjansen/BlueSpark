@@ -46,7 +46,7 @@ interface AppState {
 }
 
 const defaultWelcomeSettings: WelcomeMessageSettings = {
-  toneOfVoice: 'friendly',
+  toneOfVoice: 'warm',
   customPrompt: ''
 };
 
