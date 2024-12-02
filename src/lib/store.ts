@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { BlueSkyCredentials, FollowerProfile, MessageState, WelcomeMessageSettings, ProfileAnalysis } from '../types/bluesky';
 import { cookies } from './cookies';
+import { sessionStats } from './sessionStats';
 
 interface ApiStats {
   blueskyApiCalls: number;
@@ -49,8 +50,9 @@ const defaultWelcomeSettings: WelcomeMessageSettings = {
   customPrompt: ''
 };
 
-// Try to get stored credentials
+// Try to get stored credentials and stats
 const storedCredentials = cookies.get();
+const storedStats = sessionStats.get();
 
 export const useStore = create<AppState>((set) => ({
   // Initial state
@@ -63,10 +65,7 @@ export const useStore = create<AppState>((set) => ({
   welcomeSettings: defaultWelcomeSettings,
   profileAnalysis: null,
   isAnalyzing: false,
-  apiStats: {
-    blueskyApiCalls: 0,
-    openRouterTokens: 0
-  },
+  apiStats: storedStats,
 
   // Auth actions
   setCredentials: (creds) => {
@@ -76,13 +75,18 @@ export const useStore = create<AppState>((set) => ({
   setAutoLogging: (isLogging) => set({ isAutoLogging: isLogging }),
   logout: () => {
     cookies.remove();
+    sessionStats.clear();
     set({
       credentials: null,
       isAuthenticated: false,
       followers: [],
       userProfile: null,
       messages: {},
-      profileAnalysis: null
+      profileAnalysis: null,
+      apiStats: {
+        blueskyApiCalls: 0,
+        openRouterTokens: 0
+      }
     });
   },
 
@@ -135,24 +139,30 @@ export const useStore = create<AppState>((set) => ({
 
   // API stats actions
   incrementBlueskyApiCalls: () =>
-    set((state) => ({
-      apiStats: {
+    set((state) => {
+      const newStats = {
         ...state.apiStats,
         blueskyApiCalls: state.apiStats.blueskyApiCalls + 1
-      }
-    })),
+      };
+      sessionStats.set(newStats);
+      return { apiStats: newStats };
+    }),
   addOpenRouterTokens: (tokens) =>
-    set((state) => ({
-      apiStats: {
+    set((state) => {
+      const newStats = {
         ...state.apiStats,
         openRouterTokens: state.apiStats.openRouterTokens + tokens
-      }
-    })),
+      };
+      sessionStats.set(newStats);
+      return { apiStats: newStats };
+    }),
   resetApiStats: () =>
-    set((state) => ({
-      apiStats: {
+    set(() => {
+      const newStats = {
         blueskyApiCalls: 0,
         openRouterTokens: 0
-      }
-    }))
+      };
+      sessionStats.set(newStats);
+      return { apiStats: newStats };
+    })
 }));
