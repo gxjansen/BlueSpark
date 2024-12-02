@@ -10,32 +10,40 @@ export function FollowerList() {
   const { followers, userProfile } = useStore((state) => state);
   const { loading } = useFollowers();
   const [interactions, setInteractions] = useState<Record<string, RecentInteraction>>({});
-  const [checkingInteractions, setCheckingInteractions] = useState(false);
 
+  // Check interactions in the background after followers are loaded
   useEffect(() => {
-    async function checkInteractions() {
-      if (!userProfile || !followers.length) return;
+    if (!userProfile || !followers.length) return;
 
-      setCheckingInteractions(true);
+    let mounted = true;
+
+    async function checkInteractions() {
       const bluesky = BlueSkyService.getInstance();
       const newInteractions: Record<string, RecentInteraction> = {};
 
       for (const follower of followers) {
+        if (!mounted || !userProfile) break; // Stop if component unmounted or userProfile is null
+
         try {
           const interaction = await bluesky.checkRecentInteractions(userProfile.did, follower.did);
-          if (interaction.hasInteracted) {
-            newInteractions[follower.did] = interaction;
+          if (interaction.hasInteracted && mounted) {
+            // Update interactions one at a time as they come in
+            setInteractions(prev => ({
+              ...prev,
+              [follower.did]: interaction
+            }));
           }
         } catch (error) {
           console.warn(`Failed to check interactions for ${follower.handle}:`, error);
         }
       }
-
-      setInteractions(newInteractions);
-      setCheckingInteractions(false);
     }
 
     checkInteractions();
+
+    return () => {
+      mounted = false;
+    };
   }, [followers, userProfile]);
 
   const formatDate = (dateString?: string) => {
@@ -47,14 +55,12 @@ export function FollowerList() {
     });
   };
 
-  if (loading || checkingInteractions) {
+  if (loading) {
     return (
       <div className="w-full max-w-2xl bg-white rounded-lg shadow-md p-6">
         <div className="flex flex-col items-center justify-center py-12">
           <Loader className="w-8 h-8 text-blue-500 animate-spin" />
-          <p className="mt-4 text-gray-600">
-            {loading ? 'Loading followers...' : 'Checking recent interactions...'}
-          </p>
+          <p className="mt-4 text-gray-600">Loading followers...</p>
         </div>
       </div>
     );

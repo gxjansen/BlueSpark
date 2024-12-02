@@ -27,6 +27,7 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
   const [commonTopics, setCommonTopics] = useState<string[]>([]);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [isLoadingTopics, setIsLoadingTopics] = useState(false);
+  const [isInitialGeneration, setIsInitialGeneration] = useState(true);
 
   const loadCommonTopics = async () => {
     if (userProfile && followers) {
@@ -72,9 +73,18 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
           topic
         );
       } else {
+        // If this is the first generation, start loading topics immediately
+        if (isInitialGeneration) {
+          setIsLoadingTopics(true);
+          setIsInitialGeneration(false);
+        }
+
         message = await AIService.generateMessage(userProfile, followerProfile);
+        
         // Load topics after first message generation
-        await loadCommonTopics();
+        if (isInitialGeneration) {
+          await loadCommonTopics();
+        }
       }
 
       if (!message) {
@@ -199,7 +209,7 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
         </div>
       )}
       
-      {!messageState.message && !messageState.isGenerating && !isEditing && (
+      {!messageState.message && !messageState.isGenerating && !isEditing && !isLoadingTopics && (
         <button
           onClick={() => generateMessage()}
           className="text-blue-600 hover:text-blue-800 text-sm"
