@@ -3,6 +3,7 @@ import { RefreshCw } from 'lucide-react';
 import { useStore } from '../lib/store';
 import { ContentAnalyzer } from '../lib/analysis';
 import { WelcomeMessageSettings } from '../types/bluesky';
+import { ApiStats } from './ApiStats';
 
 export function UserProfile() {
   const {
@@ -149,6 +150,9 @@ export function UserProfile() {
           </div>
         </div>
       </div>
+
+      {/* API Stats Box */}
+      <ApiStats />
     </div>
   );
 }

@@ -14,7 +14,13 @@ interface PostRecord {
 
 export function useFollowers() {
   const [loading, setLoading] = useState(true);
-  const { credentials, setFollowers, setUserProfile } = useStore();
+  const { 
+    credentials, 
+    isAuthenticated, 
+    isAutoLogging,
+    setFollowers, 
+    setUserProfile 
+  } = useStore();
 
   const getAvatarUrl = (rawUrl: string | undefined) => {
     if (!rawUrl) return undefined;
@@ -41,7 +47,10 @@ export function useFollowers() {
 
   useEffect(() => {
     async function fetchFollowers() {
-      if (!credentials) return;
+      // Don't fetch if we're not authenticated or if auto-login is in progress
+      if (!credentials || !isAuthenticated || isAutoLogging) {
+        return;
+      }
 
       try {
         setLoading(true);
@@ -123,7 +132,7 @@ export function useFollowers() {
     }
 
     fetchFollowers();
-  }, [credentials, setFollowers, setUserProfile]);
+  }, [credentials, isAuthenticated, isAutoLogging, setFollowers, setUserProfile]);
 
   return { loading };
 }

@@ -1,4 +1,5 @@
 import { BskyAgent } from '@atproto/api';
+import { useStore } from './store';
 
 export class BlueSkyService {
   private agent: BskyAgent;
@@ -7,6 +8,12 @@ export class BlueSkyService {
   private constructor() {
     this.agent = new BskyAgent({
       service: 'https://bsky.social',
+      persistSession: (evt, sess) => {
+        // Store the session in memory
+        if (sess) {
+          this.agent.session = sess;
+        }
+      },
     });
   }
 
@@ -23,8 +30,14 @@ export class BlueSkyService {
     }
   }
 
+  private trackApiCall() {
+    const store = useStore.getState();
+    store.incrementBlueskyApiCalls();
+  }
+
   async login(identifier: string, password: string) {
     try {
+      this.trackApiCall();
       const session = await this.agent.login({ identifier, password });
       return session;
     } catch (error) {
@@ -33,15 +46,23 @@ export class BlueSkyService {
     }
   }
 
+  async resumeSession(credentials: { identifier: string; password: string }) {
+    try {
+      return await this.login(credentials.identifier, credentials.password);
+    } catch (error) {
+      console.error('Failed to resume session:', error);
+      throw error;
+    }
+  }
+
   async getProfile(handle: string) {
     try {
       this.checkAuth();
-      // Using app.bsky.actor.getProfile
+      this.trackApiCall();
       const profile = await this.agent.getProfile({ actor: handle });
       if (!profile?.data) {
         throw new Error('Failed to fetch profile');
       }
-
       return profile.data;
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -52,7 +73,7 @@ export class BlueSkyService {
   async getRecentFollowers(handle: string, limit = 20) {
     try {
       this.checkAuth();
-      // Using app.bsky.graph.getFollowers
+      this.trackApiCall();
       const followers = await this.agent.getFollowers({
         actor: handle,
         limit: limit
@@ -70,7 +91,7 @@ export class BlueSkyService {
   async getUserPosts(did: string, limit = 50) {
     try {
       this.checkAuth();
-      // Using app.bsky.feed.getAuthorFeed
+      this.trackApiCall();
       const feed = await this.agent.getAuthorFeed({
         actor: did,
         limit: limit
@@ -88,7 +109,7 @@ export class BlueSkyService {
   async createPost(text: string) {
     try {
       this.checkAuth();
-      // Using app.bsky.feed.post
+      this.trackApiCall();
       const result = await this.agent.post({
         text,
         createdAt: new Date().toISOString(),

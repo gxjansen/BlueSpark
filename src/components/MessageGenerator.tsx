@@ -49,11 +49,10 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
           displayName: followerProfile.displayName,
           description: followerProfile.description,
           postCount: followerProfile.posts?.length
-        },
-        welcomeSettings
+        }
       });
 
-      const message = await AIService.generateMessage(userProfile, followerProfile, welcomeSettings);
+      const message = await AIService.generateMessage(userProfile, followerProfile);
       if (!message) {
         throw new Error('No message was generated');
       }

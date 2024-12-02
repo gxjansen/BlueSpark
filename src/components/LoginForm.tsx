@@ -12,9 +12,12 @@ export function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Remove @ if present at the start of the handle
+      const cleanHandle = identifier.startsWith('@') ? identifier.slice(1) : identifier;
+      
       const service = BlueSkyService.getInstance();
-      await service.login(identifier, password);
-      setCredentials({ identifier, password });
+      await service.login(cleanHandle, password);
+      setCredentials({ identifier: cleanHandle, password });
       toast.success('Successfully logged in!');
     } catch (error) {
       toast.error('Login failed. Please check your credentials.');
@@ -82,10 +85,13 @@ export function LoginForm() {
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   className="mt-2 block w-full px-4 py-3 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="@handle.bsky.social"
+                  placeholder="handle.bsky.social"
                   required
                 />
               </label>
+              <p className="mt-1 text-xs text-gray-500">
+                Your handle with or without @ (e.g. handle.bsky.social)
+              </p>
             </div>
             
             <div>
