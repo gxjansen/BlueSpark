@@ -21,6 +21,9 @@ export interface FollowerProfile {
 export interface Post {
   text: string;
   createdAt: string;
+  reason?: {
+    $type: string;  // Will be 'app.bsky.feed.defs#reasonRepost' for reposts
+  };
 }
 
 export interface UserProfile extends FollowerProfile {

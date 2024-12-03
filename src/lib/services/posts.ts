@@ -53,7 +53,13 @@ export class PostsService {
         throw new Error('Failed to fetch user posts');
       }
 
-      return feed.data.feed;
+      // Filter out reposts by checking the reason.$type field
+      const originalPosts = feed.data.feed.filter(post => {
+        // If there's no reason, or the reason is not a repost, include the post
+        return !post.reason || post.reason.$type !== 'app.bsky.feed.defs#reasonRepost';
+      });
+
+      return originalPosts;
     } catch (error) {
       console.error('Error fetching user posts:', error);
       throw new Error(`Failed to fetch posts for user ${did}`);
