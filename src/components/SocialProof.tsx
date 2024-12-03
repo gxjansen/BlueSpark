@@ -33,14 +33,19 @@ export function SocialProof() {
         </div>
         
         <div className="grid gap-6 md:grid-cols-2">
-          {/* Example testimonial post */}
+          {/* Scott Pence's testimonial */}
           <blockquote 
             className="bluesky-embed" 
             data-bluesky-uri="at://did:plc:nlvjelw3dy3pddq7qoglleko/app.bsky.feed.post/3lce2wyzmqs2j"
             data-bluesky-cid="bafyreigx6k7ii6p74ib23qly3kvw74h3v6dtiruyfpdnppnaw5bx5m5s6y"
           />
           
-          {/* Add more testimonial posts here */}
+          {/* Simon Holmes' testimonial */}
+          <blockquote 
+            className="bluesky-embed" 
+            data-bluesky-uri="at://did:plc:x476ra5ygaolra5oggenmcsc/app.bsky.feed.post/3lcg2fhoxds2q"
+            data-bluesky-cid="bafyreiffvgq33pvyyehmon7cjb5ndtr3ksx6tt4ab6gzo72vor7dwa426y"
+          />
         </div>
       </div>
     </Card>

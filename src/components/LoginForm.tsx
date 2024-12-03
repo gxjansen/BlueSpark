@@ -57,7 +57,8 @@ export function LoginForm() {
                 </div>
               </div>
               <p className="text-gray-400 text-sm italic text-center">
-                "Starting a conversation can be hard.<br/> So I created BlueSpark to help break the ice!"
+                "Starting a conversation can be hard.<br/>
+                So I created BlueSpark to help break the ice!"
               </p>
             </div>
 
