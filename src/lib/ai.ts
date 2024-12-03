@@ -151,7 +151,8 @@ export class AIService {
 
   static async analyzeProfile(userProfile: any): Promise<ProfileAnalysis> {
     if (!userProfile) {
-      throw new Error('Invalid profile data');
+      console.error('Invalid profile data provided to analyzeProfile');
+      return DEFAULT_EMPTY_PROFILE_ANALYSIS;
     }
 
     // Return default analysis for empty profiles without making API call
@@ -217,26 +218,62 @@ export class AIService {
         }),
       });
 
-      const responseText = await response.text();
+      // First check if the response is ok
       if (!response.ok) {
-        throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}\n${responseText}`);
+        console.error('OpenRouter API error:', {
+          status: response.status,
+          statusText: response.statusText
+        });
+        return DEFAULT_EMPTY_PROFILE_ANALYSIS;
       }
 
-      const data = JSON.parse(responseText);
-      
+      // Get the response text and log it for debugging
+      const responseText = await response.text();
+      console.log('Raw API Response:', responseText);
+
+      // Check if the response text is empty or whitespace only
+      if (!responseText || !responseText.trim()) {
+        console.error('Empty response received from OpenRouter API');
+        return DEFAULT_EMPTY_PROFILE_ANALYSIS;
+      }
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('Failed to parse API response:', {
+          error: parseError,
+          responseText
+        });
+        return DEFAULT_EMPTY_PROFILE_ANALYSIS;
+      }
+
       // Track token usage
       this.trackTokenUsage(data);
 
-      let content = data.choices[0].message.content;
+      let content = data.choices?.[0]?.message?.content;
       
+      // If no content is found in the expected structure
+      if (!content) {
+        console.error('No content found in API response:', data);
+        return DEFAULT_EMPTY_PROFILE_ANALYSIS;
+      }
+
       // Try to extract JSON if it's wrapped in text
+      let analysis;
       try {
         const jsonMatch = content.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           content = jsonMatch[0];
         }
         
-        const analysis = JSON.parse(content);
+        analysis = JSON.parse(content);
+
+        // Validate the required fields are present
+        if (!analysis.accountType || !analysis.summary || !Array.isArray(analysis.mainTopics)) {
+          console.error('Invalid analysis structure:', analysis);
+          return DEFAULT_EMPTY_PROFILE_ANALYSIS;
+        }
 
         // If account type is detected as organization, update welcome message settings
         if (analysis.accountType === 'organization') {
@@ -250,18 +287,15 @@ export class AIService {
           basedOnPosts: hasSufficientPosts
         };
       } catch (parseError) {
-        console.error('Failed to parse analysis response:', parseError);
-        // Return a default analysis structure
-        return {
-          ...DEFAULT_EMPTY_PROFILE_ANALYSIS,
-          summary: "Unable to analyze profile at this time.",
-          mainTopics: [],
-          interests: [],
-        };
+        console.error('Failed to parse analysis content:', {
+          error: parseError,
+          content
+        });
+        return DEFAULT_EMPTY_PROFILE_ANALYSIS;
       }
     } catch (error) {
-      console.error('Error analyzing profile:', error);
-      throw new Error('Failed to analyze profile');
+      console.error('Error in analyzeProfile:', error);
+      return DEFAULT_EMPTY_PROFILE_ANALYSIS;
     }
   }
 }

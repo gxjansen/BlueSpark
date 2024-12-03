@@ -7,6 +7,7 @@ import { ContentAnalyzer } from '../lib/analysis';
 import { Card } from './shared/Card';
 import { Button } from './shared/Button';
 import { TopicTagList } from './shared/TopicTag';
+import { ErrorState } from './shared/ErrorState';
 import toast from 'react-hot-toast';
 
 const MAX_CHARS = 300;
@@ -35,6 +36,7 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
   const [isLoadingTopics, setIsLoadingTopics] = useState(false);
   const [isInitialGeneration, setIsInitialGeneration] = useState(true);
   const [isPosted, setIsPosted] = useState(false);
+  const [postError, setPostError] = useState<string | null>(null);
 
   const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value;
@@ -76,6 +78,7 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
     setGenerating(followerHandle, true);
     setError(followerHandle, null);
     setIsEditing(false);
+    setPostError(null);
 
     try {
       if (!userProfile) {
@@ -134,15 +137,30 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
       return;
     }
 
+    // Reset any previous errors
+    setPostError(null);
+
     try {
       const bluesky = BlueSkyService.getInstance();
       await bluesky.createPost(messageToPost);
       setIsPosted(true);
       toast.success('Welcome message posted successfully!');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to post message';
       console.error('Post error:', error);
-      toast.error(errorMessage);
+      
+      // Handle specific BlueSky errors
+      if (error instanceof Error) {
+        const errorMessage = error.message;
+        
+        // Check for DID validation error
+        if (errorMessage.includes('Record/facets') && errorMessage.includes('did must be a valid did')) {
+          setPostError('Unable to post message: The message contains an invalid user mention. Please try editing the message to fix any @mentions.');
+        } else {
+          setPostError('Unable to post message to BlueSky. Please try again or edit the message.');
+        }
+      } else {
+        setPostError('An unexpected error occurred while posting. Please try again.');
+      }
     }
   };
 
@@ -182,6 +200,12 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
         <div className="mb-3 text-sm text-gray-400 flex items-center">
           <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
           Finding common topics...
+        </div>
+      )}
+
+      {postError && (
+        <div className="mb-4">
+          <ErrorState message={postError} />
         </div>
       )}
 
@@ -265,8 +289,8 @@ export function MessageGenerator({ followerHandle }: MessageGeneratorProps) {
       )}
 
       {messageState.error && (
-        <div className="text-sm text-red-400 mt-2">
-          Error: {messageState.error}
+        <div className="mt-4">
+          <ErrorState message={messageState.error} />
         </div>
       )}
     </div>
