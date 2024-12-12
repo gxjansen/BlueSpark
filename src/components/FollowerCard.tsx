@@ -1,4 +1,4 @@
-import { UserRound, Calendar, AlertCircle, Building2, User, ExternalLink } from 'lucide-react';
+import { UserRound, Calendar, AlertCircle, Building2, User, ExternalLink, X } from 'lucide-react';
 import { Card } from './shared/Card';
 import { Badge } from './shared/Badge';
 import { MessageGenerator } from './MessageGenerator';
@@ -9,9 +9,11 @@ interface FollowerCardProps {
   follower: FollowerProfile;
   interaction?: RecentInteraction;
   onSelect?: () => void;
+  onHide?: (followerDid: string) => void;
 }
 
-export function FollowerCard({ follower, interaction, onSelect }: FollowerCardProps) {
+export function FollowerCard({ follower, interaction, onSelect, onHide }: FollowerCardProps) {
+  // Format a date string into a readable format
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'No posts yet';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -21,6 +23,7 @@ export function FollowerCard({ follower, interaction, onSelect }: FollowerCardPr
     });
   };
 
+  // Determine if the user joined within the last two weeks
   const isNewUser = () => {
     if (!follower.joinedAt) return false;
     
@@ -32,7 +35,7 @@ export function FollowerCard({ follower, interaction, onSelect }: FollowerCardPr
     joinDate.setHours(0, 0, 0, 0);
     twoWeeksAgo.setHours(0, 0, 0, 0);
 
-    // Debug logging
+    // Compute days since joining
     const daysSinceJoining = Math.floor((Date.now() - joinDate.getTime()) / (1000 * 60 * 60 * 24));
     console.debug('Join date check:', {
       handle: follower.handle,
@@ -47,11 +50,20 @@ export function FollowerCard({ follower, interaction, onSelect }: FollowerCardPr
 
   const profileUrl = `https://bsky.app/profile/${follower.handle}`;
 
+  // Handle the click event when the hide button is pressed
+  const handleHideClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    if (onHide) {
+      onHide(follower.did);
+    }
+  };
+
   return (
     <Card className="relative">
       <div className="flex flex-col gap-4">
-        {/* Header with Avatar and Name */}
+        {/* Header with Avatar, Name, Stats, and Hide Button */}
         <div className="flex items-start justify-between">
+          {/* Left side: Avatar and Name */}
           <a 
             href={profileUrl}
             target="_blank"
@@ -90,17 +102,28 @@ export function FollowerCard({ follower, interaction, onSelect }: FollowerCardPr
             </div>
           </a>
 
-          {/* Stats */}
-          <div className="flex items-center gap-4 text-sm text-gray-400">
-            <div className="flex items-center">
-              <UserRound className="w-4 h-4 mr-1" />
-              <span>{follower.followersCount}</span>
-              <span className="mx-1">·</span>
-              <span>{follower.followsCount}</span>
+          {/* Right side: Stats and Hide Button */}
+          <div className="flex items-center gap-2">
+            {/* Stats */}
+            <div className="flex items-center gap-4 text-sm text-gray-400">
+              <div className="flex items-center">
+                <UserRound className="w-4 h-4 mr-1" />
+                <span>{follower.followersCount}</span>
+                <span className="mx-1">·</span>
+                <span>{follower.followsCount}</span>
+              </div>
+              <div>
+                <span>{follower.postsCount} posts</span>
+              </div>
             </div>
-            <div>
-              <span>{follower.postsCount} posts</span>
-            </div>
+            {/* Hide Button */}
+            <button
+              onClick={handleHideClick}
+              className="text-gray-400 hover:text-red-500 transition-colors"
+              aria-label="Hide follower"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
         </div>
 
