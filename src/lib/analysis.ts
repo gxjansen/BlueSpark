@@ -1,5 +1,14 @@
 import { AIService } from './ai';
 import { FollowerProfile, ProfileAnalysis } from '../types/bluesky';
+import { useStore } from './store';
+
+// Import TONE_GUIDELINES from AIService
+const TONE_GUIDELINES = {
+  warm: 'Be welcoming, sincere, and friendly. Use a conversational tone that makes the new follower feel valued and comfortable.',
+  professional: 'Maintain a polite, business-like tone while being approachable. Use clear, concise language and remain courteous.',
+  humorous: 'Keep the message light-hearted and fun, incorporating subtle humor where appropriate. Stay positive and playful while remaining respectful.',
+  enthusiastic: 'Show high energy and excitement about connecting. Use dynamic language and express genuine interest in getting to know the follower.'
+};
 
 export class ContentAnalyzer {
   static async analyzeUserProfile(profile: FollowerProfile) {
@@ -57,6 +66,10 @@ export class ContentAnalyzer {
   ) {
     const isNewUser = followerProfile.postsCount === 0;
     const isOrganization = userProfile.accountType === 'organization';
+    
+    // Get current welcome settings from store
+    const store = useStore.getState();
+    const { toneOfVoice, customPrompt: additionalInstructions } = store.welcomeSettings;
 
     const prompt = `
       Generate a welcome message focusing on the topic: ${selectedTopic}
@@ -99,6 +112,12 @@ export class ContentAnalyzer {
          - Shows genuine interest in their perspective
          - Is open-ended to encourage discussion
          ${isOrganization ? '- Use "we" instead of "I" in questions' : ''}
+
+      TONE REQUIREMENTS:
+      ${TONE_GUIDELINES[toneOfVoice]}
+
+      ${additionalInstructions ? `ADDITIONAL INSTRUCTIONS:
+      ${additionalInstructions}` : ''}
 
       DO NOT include any introductory text like "Here's a message:" or explanatory text.
       ONLY generate the welcome message itself.

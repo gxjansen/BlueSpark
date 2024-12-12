@@ -1,6 +1,6 @@
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 import { useStore } from './store';
-import type { ProfileAnalysis } from '../types/bluesky';
+import type { ProfileAnalysis, ToneOfVoice } from '../types/bluesky';
 
 const MIN_POSTS_FOR_ANALYSIS = 20;
 
@@ -15,6 +15,42 @@ const DEFAULT_EMPTY_PROFILE_ANALYSIS: ProfileAnalysis = {
   accountType: 'personal'
 };
 
+// Enhanced tone of voice guidelines for stronger differentiation
+const TONE_GUIDELINES: Record<ToneOfVoice, string> = {
+  warm: `
+    - Use warm, friendly language that creates a personal connection
+    - Include phrases like "so glad to connect", "wonderful to meet you", "looking forward to"
+    - Show genuine interest and empathy in your response
+    - Keep the tone conversational and inviting
+    - Use gentle, welcoming words and phrases
+    - Make the follower feel valued and appreciated
+  `,
+  professional: `
+    - Maintain a polite, business-appropriate tone throughout
+    - Use more formal language while remaining approachable
+    - Focus on expertise and professional interests
+    - Keep responses concise and well-structured
+    - Use industry-standard terminology where relevant
+    - Maintain professional courtesy while showing interest
+  `,
+  humorous: `
+    - Include a light-hearted observation or playful comment
+    - Use wordplay, puns or gentle humor where appropriate
+    - Keep the tone fun and engaging
+    - Include a playful element in the question
+    - Stay positive and upbeat throughout
+    - Use casual, cheerful language
+  `,
+  enthusiastic: `
+    - Show high energy and excitement in your language
+    - Use exclamation marks appropriately to convey enthusiasm
+    - Express strong interest in shared topics
+    - Include words like "excited", "amazing", "fantastic", "love"
+    - Show eagerness to engage in conversation
+    - Convey genuine excitement about the connection
+  `
+};
+
 export class AIService {
   private static apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
   private static model = import.meta.env.VITE_OPENROUTER_MODEL;
@@ -24,6 +60,29 @@ export class AIService {
       const store = useStore.getState();
       store.addOpenRouterTokens(response.usage.total_tokens);
     }
+  }
+
+  private static getCurrentTone(): ToneOfVoice {
+    // Get current welcome settings from store
+    const store = useStore.getState();
+    const { toneOfVoice } = store.welcomeSettings;
+
+    // Load settings from localStorage as a fallback
+    if (!toneOfVoice) {
+      try {
+        const savedSettings = localStorage.getItem('welcomeSettings');
+        if (savedSettings) {
+          const parsed = JSON.parse(savedSettings);
+          if (parsed.toneOfVoice) {
+            return parsed.toneOfVoice;
+          }
+        }
+      } catch (error) {
+        console.error('Error reading tone from localStorage:', error);
+      }
+    }
+
+    return toneOfVoice || 'warm';
   }
 
   static async generateMessage(
@@ -36,6 +95,17 @@ export class AIService {
       console.error('Missing profile data:', { userProfile, followerProfile });
       throw new Error('Invalid profile data');
     }
+
+    // Get current welcome settings from store
+    const store = useStore.getState();
+    const { toneOfVoice, customPrompt: additionalInstructions } = store.welcomeSettings;
+
+    // Debug log to verify tone setting
+    console.log('Current tone settings:', {
+      storeSettings: store.welcomeSettings,
+      localStorageSettings: localStorage.getItem('welcomeSettings'),
+      selectedTone: toneOfVoice
+    });
 
     const isNewUser = followerProfile.postsCount === 0;
     const isOrganization = userProfile.accountType === 'organization';
@@ -62,6 +132,8 @@ export class AIService {
     }
 
     const prompt = customPrompt || `
+      CURRENT TONE SETTING: ${toneOfVoice}
+
       User Profile:
       Name: ${userProfile.displayName || 'Unknown'}
       Bio: ${userProfile.description || 'No bio'}
@@ -75,8 +147,10 @@ export class AIService {
       Posts count: ${followerProfile.postsCount}
       Recent posts: ${(followerProfile.posts || []).slice(0, 3).map((p: any) => p.text || '').join('\n')}
 
-      Generate ONLY the welcome message itself, with no introductory text or explanations.
-      IMPORTANT REQUIREMENTS:
+      CRITICAL TONE REQUIREMENTS - YOU MUST FOLLOW THESE EXACTLY:
+      ${TONE_GUIDELINES[toneOfVoice]}
+
+      IMPORTANT MESSAGE REQUIREMENTS:
       1. First sentence MUST include "@${followerProfile.handle}" and indicate this is a first meeting/introduction
       2. Message MUST end with a relevant question about a shared interest to start a conversation
       3. Keep it ${isOrganization ? 'professional yet approachable' : 'casual and authentic'}
@@ -103,8 +177,14 @@ export class AIService {
          - Example: "I see you're also into [shared interest]. What's your take on [specific aspect]?"
          ${isOrganization ? '- Use "we" instead of "I" in questions' : ''}
 
-      DO NOT include any introductory text like "Here's a message:" or explanatory text.
-      ONLY generate the welcome message itself.
+      ${additionalInstructions ? `ADDITIONAL INSTRUCTIONS:
+      ${additionalInstructions}` : ''}
+
+      FINAL REMINDERS:
+      - The tone of the message MUST strongly reflect the ${toneOfVoice} tone guidelines above
+      - DO NOT default to professional tone unless explicitly set
+      - DO NOT include any introductory text like "Here's a message:" or explanatory text
+      - ONLY generate the welcome message itself
     `;
 
     try {
@@ -302,10 +382,17 @@ export class AIService {
           return DEFAULT_EMPTY_PROFILE_ANALYSIS;
         }
 
-        // If account type is detected as organization, update welcome message settings
+        // If account type is detected as organization, only set professional tone if no tone is explicitly set
         if (analysis.accountType === 'organization') {
           const store = useStore.getState();
-          store.updateWelcomeSettings({ toneOfVoice: 'professional' });
+          const currentSettings = store.welcomeSettings;
+          
+          // Check if the tone has been explicitly set (different from default 'warm')
+          const hasExplicitTone = localStorage.getItem('welcomeSettings') !== null;
+          
+          if (!hasExplicitTone) {
+            store.updateWelcomeSettings({ toneOfVoice: 'professional' });
+          }
         }
 
         return {
