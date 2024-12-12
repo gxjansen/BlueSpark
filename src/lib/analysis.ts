@@ -55,21 +55,53 @@ export class ContentAnalyzer {
     followerProfile: FollowerProfile,
     selectedTopic: string
   ) {
+    const isNewUser = followerProfile.postsCount === 0;
+    const isOrganization = userProfile.accountType === 'organization';
+
     const prompt = `
       Generate a welcome message focusing on the topic: ${selectedTopic}
 
       User Profile:
       Name: ${userProfile.displayName || 'Unknown'}
       Bio: ${userProfile.description || 'No bio'}
+      Account Type: ${isOrganization ? 'Organization' : 'Personal'}
       Recent posts: ${userProfile.posts.slice(0, 3).map(p => p.text).join('\n')}
 
       New Follower Profile:
+      Handle: @${followerProfile.handle}
       Name: ${followerProfile.displayName || 'Unknown'}
       Bio: ${followerProfile.description || 'No bio'}
+      Posts count: ${followerProfile.postsCount}
       Recent posts: ${followerProfile.posts.slice(0, 3).map(p => p.text).join('\n')}
 
-      Generate a friendly, personalized welcome message focusing on the shared interest in ${selectedTopic}.
-      Keep it casual and authentic, under 300 characters.
+      IMPORTANT REQUIREMENTS:
+      1. First sentence MUST include "@${followerProfile.handle}" and indicate this is a first meeting/introduction
+      2. Message MUST end with a relevant question about ${selectedTopic} to start a conversation
+      3. Keep it ${isOrganization ? 'professional yet approachable' : 'casual and authentic'}
+      4. Message must be under 300 characters
+      5. Use one of these formats for the first sentence:
+         ${isNewUser ? 
+           `- "Hello @${followerProfile.handle}, welcome to Bluesky!"
+            - "Hi @${followerProfile.handle}! Welcome to the community!"
+            - "Hey @${followerProfile.handle}, excited to be one of your first connections on Bluesky!"` 
+           :
+           isOrganization ?
+           `- "Hi @${followerProfile.handle}, thanks for following us!"
+            - "Hello @${followerProfile.handle}! We're glad to connect!"
+            - "Welcome @${followerProfile.handle}! Thanks for joining our community!"` 
+           :
+           `- "Hi @${followerProfile.handle}, thanks for following me!"
+            - "Hey @${followerProfile.handle}, nice meeting you!"
+            - "Hello @${followerProfile.handle}! Thanks for connecting!"`
+         }
+      6. End with a question that:
+         - Is specific to ${selectedTopic}
+         - Shows genuine interest in their perspective
+         - Is open-ended to encourage discussion
+         ${isOrganization ? '- Use "we" instead of "I" in questions' : ''}
+
+      DO NOT include any introductory text like "Here's a message:" or explanatory text.
+      ONLY generate the welcome message itself.
     `;
 
     return AIService.generateMessage(userProfile, followerProfile, prompt);

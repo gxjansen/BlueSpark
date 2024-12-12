@@ -40,6 +40,27 @@ export class AIService {
     const isNewUser = followerProfile.postsCount === 0;
     const isOrganization = userProfile.accountType === 'organization';
 
+    // If a custom prompt is provided, ensure it includes the @-mention requirement
+    if (customPrompt) {
+      customPrompt = `${customPrompt}
+
+      CRITICAL REQUIREMENT: The message MUST start with one of these exact greetings:
+      ${isNewUser ? 
+        `- "Hello @${followerProfile.handle}, welcome to Bluesky!"
+         - "Hi @${followerProfile.handle}! Welcome to the community!"
+         - "Hey @${followerProfile.handle}, excited to be one of your first connections on Bluesky!"` 
+        :
+        isOrganization ?
+        `- "Hi @${followerProfile.handle}, thanks for following us!"
+         - "Hello @${followerProfile.handle}! We're glad to connect!"
+         - "Welcome @${followerProfile.handle}! Thanks for joining our community!"` 
+        :
+        `- "Hi @${followerProfile.handle}, thanks for following me!"
+         - "Hey @${followerProfile.handle}, nice meeting you!"
+         - "Hello @${followerProfile.handle}! Thanks for connecting!"`
+      }`;
+    }
+
     const prompt = customPrompt || `
       User Profile:
       Name: ${userProfile.displayName || 'Unknown'}
@@ -140,6 +161,12 @@ export class AIService {
       message = message.replace(/^(Here['']s a message:?\s*)/i, '');
       message = message.replace(/^(Welcome message:?\s*)/i, '');
       message = message.replace(/^(Message:?\s*)/i, '');
+
+      // Validate that the message starts with a proper @-mention
+      if (!message.includes(`@${followerProfile.handle}`)) {
+        console.error('Generated message missing required @-mention, regenerating...');
+        return this.generateMessage(userProfile, followerProfile, customPrompt);
+      }
 
       return message;
     } catch (error: unknown) {
