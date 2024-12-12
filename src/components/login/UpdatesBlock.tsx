@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card } from '../shared/Card';
-import { Sparkles, MessageSquare, Users, PenLine, GitPullRequestCreateArrow } from 'lucide-react';
+import { Sparkles, MessageSquare, Users, PenLine, GitPullRequestCreateArrow, Lightbulb, Github, Code } from 'lucide-react';
 
 interface Update {
   title: string;
@@ -61,6 +61,17 @@ export function UpdatesBlock() {
             </div>
           </div>
         ))}
+      </div>
+      <div className="mt-6 pt-6 border-t border-[#3b4758]">
+        <a
+          href="https://github.com/gxjansen/BlueSpark/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300"
+        >
+          <Code className="w-4 h-4" />
+          <span>See latest code changes on GitHub</span>
+        </a>
       </div>
     </Card>
   );

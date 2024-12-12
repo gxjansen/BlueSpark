@@ -11,11 +11,7 @@ export class AuthService {
   private constructor() {
     this.agent = new BskyAgent({
       service: 'https://bsky.social',
-      persistSession: (_evt, sess) => {
-        if (sess) {
-          this.agent.session = sess;
-        }
-      },
+      // Remove the persistSession callback as we don't need to manually set the session
     });
   }
 

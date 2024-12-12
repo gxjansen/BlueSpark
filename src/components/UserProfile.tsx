@@ -50,23 +50,34 @@ export function UserProfile() {
     profileAnalysis,
     welcomeSettings,
     isAnalyzing,
-    setProfileAnalysis,
     setIsAnalyzing,
+    loadCachedAnalysis,
+    saveAnalysisToCache,
     updateWelcomeSettings
   } = useStore();
 
+  // Try to load cached analysis first, then analyze if no cache exists
   useEffect(() => {
     if (userProfile && !profileAnalysis && !isAnalyzing) {
-      analyzeProfile();
+      const handle = userProfile.handle;
+      loadCachedAnalysis(handle);
+      
+      // Use setTimeout to ensure loadCachedAnalysis has completed
+      setTimeout(() => {
+        const currentAnalysis = useStore.getState().profileAnalysis;
+        if (!currentAnalysis) {
+          analyzeProfile();
+        }
+      }, 0);
     }
-  }, [userProfile, profileAnalysis, isAnalyzing]);
+  }, [userProfile]);
 
   const analyzeProfile = async () => {
     if (!userProfile) return;
     setIsAnalyzing(true);
     try {
       const analysis = await ContentAnalyzer.analyzeUserProfile(userProfile);
-      setProfileAnalysis(analysis);
+      saveAnalysisToCache(userProfile.handle, analysis);
     } catch (error) {
       console.error('Failed to analyze profile:', error);
     } finally {
@@ -137,6 +148,7 @@ export function UserProfile() {
             onClick={analyzeProfile}
             disabled={isAnalyzing}
             className="text-blue-400 hover:text-blue-300 p-1.5 rounded-md hover:bg-[#2a3441]"
+            title="Refresh analysis"
           >
             <RefreshCw className={`w-4 h-4 ${isAnalyzing ? 'animate-spin' : ''}`} />
           </button>
@@ -161,7 +173,9 @@ export function UserProfile() {
               </div>
             </div>
           </div>
-        ) : null}
+        ) : (
+          <p className="text-sm text-gray-400">Loading profile analysis...</p>
+        )}
       </div>
 
       {/* Welcome Message Settings */}
