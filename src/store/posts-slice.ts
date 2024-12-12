@@ -1,5 +1,5 @@
 import { StateCreator } from 'zustand';
-import { FollowerProfile, MessageState, WelcomeMessageSettings, ProfileAnalysis } from '../types/bluesky';
+import { FollowerProfile, MessageState, WelcomeMessageSettings, ProfileAnalysis, EmojiLevel } from '../types/bluesky';
 
 export interface PostsState {
   followers: FollowerProfile[];
@@ -30,7 +30,8 @@ export interface PostsSlice extends PostsState, PostsActions {}
 const loadWelcomeSettings = (): WelcomeMessageSettings => {
   const defaultSettings: WelcomeMessageSettings = {
     toneOfVoice: 'warm',
-    customPrompt: ''
+    customPrompt: '',
+    emojiLevel: 'off'
   };
 
   try {
@@ -42,7 +43,9 @@ const loadWelcomeSettings = (): WelcomeMessageSettings => {
         typeof parsed === 'object' &&
         typeof parsed.toneOfVoice === 'string' &&
         ['warm', 'professional', 'humorous', 'enthusiastic'].includes(parsed.toneOfVoice) &&
-        typeof parsed.customPrompt === 'string'
+        typeof parsed.customPrompt === 'string' &&
+        typeof parsed.emojiLevel === 'string' &&
+        ['off', 'low', 'high'].includes(parsed.emojiLevel)
       ) {
         console.log('Loaded welcome settings from localStorage:', parsed);
         return parsed;

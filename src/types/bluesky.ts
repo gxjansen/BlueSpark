@@ -51,7 +51,10 @@ export interface MessageState {
 
 export type ToneOfVoice = 'warm' | 'professional' | 'humorous' | 'enthusiastic';
 
+export type EmojiLevel = 'off' | 'low' | 'high';
+
 export interface WelcomeMessageSettings {
   toneOfVoice: ToneOfVoice;
   customPrompt: string;
+  emojiLevel: EmojiLevel;
 }

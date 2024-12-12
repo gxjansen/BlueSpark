@@ -1,6 +1,6 @@
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 import { useStore } from './store';
-import type { ProfileAnalysis, ToneOfVoice } from '../types/bluesky';
+import type { ProfileAnalysis, ToneOfVoice, EmojiLevel } from '../types/bluesky';
 
 const MIN_POSTS_FOR_ANALYSIS = 20;
 
@@ -51,6 +51,25 @@ const TONE_GUIDELINES: Record<ToneOfVoice, string> = {
   `
 };
 
+// Emoji usage guidelines based on level
+const EMOJI_GUIDELINES: Record<EmojiLevel, string> = {
+  off: 'Do not use any emoji in the message.',
+  low: `
+    - Use a maximum of 2 emoji in the entire message
+    - Only use emoji that are directly relevant to the topic or emotion being expressed
+    - Place emoji at natural points in the message (end of greeting or question)
+    - Don't use emoji just for decoration
+  `,
+  high: `
+    - Use emoji in every sentence, but keep the message easily readable
+    - Use emoji that enhance and complement the message content
+    - Place emoji at natural breakpoints in the message
+    - Use emoji that match the tone and topic
+    - Maximum of 10 emoji in total
+    - Vary the emoji used (don't repeat the same ones)
+    `
+};
+
 export class AIService {
   private static apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
   private static model = import.meta.env.VITE_OPENROUTER_MODEL;
@@ -98,13 +117,14 @@ export class AIService {
 
     // Get current welcome settings from store
     const store = useStore.getState();
-    const { toneOfVoice, customPrompt: additionalInstructions } = store.welcomeSettings;
+    const { toneOfVoice, customPrompt: additionalInstructions, emojiLevel } = store.welcomeSettings;
 
-    // Debug log to verify tone setting
-    console.log('Current tone settings:', {
+    // Debug log to verify settings
+    console.log('Current message settings:', {
       storeSettings: store.welcomeSettings,
       localStorageSettings: localStorage.getItem('welcomeSettings'),
-      selectedTone: toneOfVoice
+      selectedTone: toneOfVoice,
+      emojiLevel: emojiLevel
     });
 
     const isNewUser = followerProfile.postsCount === 0;
@@ -132,7 +152,9 @@ export class AIService {
     }
 
     const prompt = customPrompt || `
-      CURRENT TONE SETTING: ${toneOfVoice}
+      CURRENT SETTINGS:
+      - Tone: ${toneOfVoice}
+      - Emoji Level: ${emojiLevel}
 
       User Profile:
       Name: ${userProfile.displayName || 'Unknown'}
@@ -149,6 +171,9 @@ export class AIService {
 
       CRITICAL TONE REQUIREMENTS - YOU MUST FOLLOW THESE EXACTLY:
       ${TONE_GUIDELINES[toneOfVoice]}
+
+      CRITICAL EMOJI REQUIREMENTS - YOU MUST FOLLOW THESE EXACTLY:
+      ${EMOJI_GUIDELINES[emojiLevel]}
 
       IMPORTANT MESSAGE REQUIREMENTS:
       1. First sentence MUST include "@${followerProfile.handle}" and indicate this is a first meeting/introduction
@@ -182,6 +207,7 @@ export class AIService {
 
       FINAL REMINDERS:
       - The tone of the message MUST strongly reflect the ${toneOfVoice} tone guidelines above
+      - Follow the emoji guidelines for ${emojiLevel} emoji usage exactly
       - DO NOT default to professional tone unless explicitly set
       - DO NOT include any introductory text like "Here's a message:" or explanatory text
       - ONLY generate the welcome message itself

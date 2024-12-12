@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
-import { RefreshCw, Settings, Activity, ExternalLink } from 'lucide-react';
+import { RefreshCw, Settings, Activity, ExternalLink, Smile } from 'lucide-react';
 import { useStore } from '../lib/store';
 import { ContentAnalyzer } from '../lib/analysis';
-import { WelcomeMessageSettings } from '../types/bluesky';
+import { WelcomeMessageSettings, EmojiLevel } from '../types/bluesky';
 import { ApiStats } from './ApiStats';
 
 // Function to sanitize user input
@@ -30,6 +30,18 @@ const toneOptions: ToneOption[] = [
   { value: 'professional', label: 'Professional', description: 'Polite and business-like' },
   { value: 'humorous', label: 'Humorous', description: 'Light-hearted and fun' },
   { value: 'enthusiastic', label: 'Enthusiastic', description: 'Energetic and excited' }
+];
+
+interface EmojiOption {
+  value: EmojiLevel;
+  label: string;
+  description: string;
+}
+
+const emojiOptions: EmojiOption[] = [
+  { value: 'off', label: 'Off', description: 'No emoji in messages' },
+  { value: 'low', label: 'Low', description: 'Max 2 emoji, only when relevant' },
+  { value: 'high', label: 'High', description: 'Emoji in every sentence (max 10)' }
 ];
 
 export function UserProfile() {
@@ -64,6 +76,10 @@ export function UserProfile() {
 
   const handleToneChange = (tone: WelcomeMessageSettings['toneOfVoice']) => {
     updateWelcomeSettings({ toneOfVoice: tone });
+  };
+
+  const handleEmojiLevelChange = (level: EmojiLevel) => {
+    updateWelcomeSettings({ emojiLevel: level });
   };
 
   const handleCustomPromptChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -156,6 +172,7 @@ export function UserProfile() {
         </div>
         
         <div className="space-y-4">
+          {/* Tone of Voice */}
           <div className="space-y-2">
             <label className="text-xs font-medium text-gray-400">Tone of Voice</label>
             <div className="grid grid-cols-2 gap-2">
@@ -178,6 +195,33 @@ export function UserProfile() {
             </div>
           </div>
 
+          {/* Emoji Level */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Smile className="w-4 h-4 text-gray-400" />
+              <label className="text-xs font-medium text-gray-400">Emoji Level</label>
+            </div>
+            <div className="flex gap-2">
+              {emojiOptions.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => handleEmojiLevelChange(option.value)}
+                  className={`group relative flex-1 px-3 py-1.5 text-sm rounded-md ${
+                    welcomeSettings.emojiLevel === option.value
+                      ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                      : 'bg-[#2a3441] text-gray-300 hover:bg-[#323e4e] border border-transparent'
+                  }`}
+                >
+                  {option.label}
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-[#2a3441] text-gray-100 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-[#323e4e] z-10">
+                    {option.description}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Additional Instructions */}
           <div className="space-y-2">
             <label htmlFor="customPrompt" className="text-xs font-medium text-gray-400">
               Additional Instructions
